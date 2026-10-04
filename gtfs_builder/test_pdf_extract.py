@@ -58,10 +58,10 @@ def test_track_for_columns_no_badges():
 
 
 def test_merge_pivot():
-    arrival = ("SLE-NHV", "New Haven - Union Station", "6:51 A", 5)
-    departure = ("SLE-NHV", "New Haven Union Station", "6:55 A", None)
+    arrival = ("SLE-2NH", "New Haven - Union Station", "6:51 A", 5)
+    departure = ("SLE-2NH", "New Haven Union Station", "6:55 A", None)
     merged = X._merge_pivot(arrival, departure)
-    assert merged == [("SLE-NHV", "New Haven - Union Station", "6:51 A", "6:55 A", 5)]
+    assert merged == [("SLE-2NH", "New Haven - Union Station", "6:51 A", "6:55 A", 5)]
 
 
 @pytest.mark.parametrize(
@@ -85,12 +85,12 @@ def test_thru_trip_shares_new_haven_pivot_with_distinct_arrival_departure(config
     rev = next(r for r in config["revision"] if r["name"] == "20261005-weekday")
     trips = X.extract_revision(SOURCES_DIR / rev["pdf"], "weekday", config)
     trip_1633 = next(t for t in trips if t["trip_short_name"] == "1633")
-    pivot = next(s for s in trip_1633["stops"] if s[0] == "SLE-NHV")
+    pivot = next(s for s in trip_1633["stops"] if s[0] == "SLE-2NH")
     _, _, arrival_text, departure_text, _ = pivot
     assert arrival_text == "6:51 A"
     assert departure_text == "6:55 A"
     # the trip must continue past New Haven to Stamford, not stop there
-    assert trip_1633["stops"][-1][0] == "SLE-STM"
+    assert trip_1633["stops"][-1][0] == "SLE-2SM"
 
 
 @pytest.mark.parametrize(

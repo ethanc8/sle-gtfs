@@ -508,3 +508,44 @@ stays trustworthy as a description of what the pipeline actually does.
   issues above, which is exactly what they were added to confirm (requirement
   #7 — a future real outage/holiday PDF should need a config change, not new
   parsing code).
+
+## 13. Corrections after initial implementation
+
+Two things the project owner corrected after reviewing the first working
+build:
+
+- **A `no_op` flag for exception revisions, after all.** The "every
+  exception revision is a fully independent service, always, even when the
+  schedule is unchanged" rule from section 0/12 was something the owner
+  wanted *proven to work* on the real 2026-10-10/11 outage PDF, not
+  necessarily shipped that way permanently. `config.toml`'s
+  `20261010-11-outage` revision now has `no_op = true`: `build_gtfs.py`
+  skips it entirely (no trips, no calendar_dates rows at all, standing
+  service left alone) once a revision is flagged this way. The underlying
+  mechanism — independent trip_ids/stop_times under their own service_id,
+  plus `exception_type=2` suppression of whatever standing service would
+  otherwise cover those dates — is unchanged and still fully covered by
+  tests; it's just not exercised by the shipped config's default revision
+  list anymore. See `test_build_gtfs.py::test_non_noop_exception_revision_*`
+  (forces the flag off against the real extracted data) and
+  `::test_noop_exception_revision_produces_nothing` (confirms the flagged
+  revision is actually inert in the built feed).
+- **Stop IDs/codes for the 7 MNR-shared stations now come from MNR, not
+  Amtrak or an invented code.** Sections 3/5's original `SLE-<3-letter-code>`
+  scheme sourced those codes from Amtrak's stop_id (or invented one, for New
+  Haven-State Street and the 3 stations Amtrak doesn't serve) purely for
+  human readability, with no particular reasoning about which upstream
+  system's code to prefer. The owner wants MNR's own `stop_code` (from
+  `gtfsmnr/stops.txt`, e.g. `2SM` for Stamford, `2NH` for New Haven) used
+  instead for every station MNR also serves — `stop_id` becomes `SLE-2SM`
+  etc., and a new `stop_code` column on `stops.txt` carries the bare code
+  (`2SM`) directly. The motivation: a future tool converting MNR's realtime
+  feed into GTFS-RT for this feed can match on `stop_code` against MNR's own
+  codes with no separate translation table. The 7 SLE-only stations (no MNR
+  service) are unaffected in `stop_id`, and gained a `stop_code` column too
+  (populated with their Amtrak stop_id, e.g. `NLC`) for consistency even
+  though no realtime-matching need was stated for those. Changing `stop_id`
+  required re-running and re-promoting every `extracted/*.csv` (the station
+  lookup is baked in at extraction time, not resolved later) — see
+  `gtfs_builder/config.toml`'s stops section for the full station-by-station
+  code table.

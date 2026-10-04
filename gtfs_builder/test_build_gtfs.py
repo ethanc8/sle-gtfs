@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 
 from gtfs_builder import build_gtfs as B
@@ -107,3 +109,51 @@ def test_build_end_to_end_is_internally_consistent():
                 B.parse_iso_date(f"{date[:4]}-{date[4:6]}-{date[6:]}"),
             ):
                 assert (cal["service_id"], date) in removed
+
+
+def test_noop_exception_revision_produces_nothing():
+    """The real 20261010-11-outage revision is flagged no_op=true in
+    config.toml (its SLE schedule is unchanged -- see its `notes`), so it
+    must not appear anywhere in the built feed: no calendar_dates rows, no
+    trips, no stop_times."""
+    config = B.load_config()
+    rev = next(r for r in config["revision"] if r["name"] == "20261010-11-outage")
+    assert rev.get("no_op") is True  # guard against the config drifting silently
+
+    tables = B.build(config)
+    service_id = f"SLE-{rev['name']}"
+    assert not any(t["service_id"] == service_id for t in tables["trips"])
+    assert not any(c["service_id"] == service_id for c in tables["calendar_dates"])
+    assert not any(c["date"] in ("20261010", "20261011") for c in tables["calendar_dates"])
+
+
+def test_non_noop_exception_revision_builds_independent_service_and_suppresses_standing():
+    """Integration-level coverage for the "fully independent exception
+    service" mechanism (see llm_notes/SPEC.md section 12): force the real
+    20261010-11-outage revision's no_op flag off and confirm build() still
+    produces a correct independent service + standing-calendar suppression,
+    using the real extracted data already on disk. This was manually proven
+    once during implementation (including a deliberate bug injection caught
+    by the Rust validator); this test keeps that proof automated even though
+    the shipped config no longer exercises this path by default."""
+    config = copy.deepcopy(B.load_config())
+    rev = next(r for r in config["revision"] if r["name"] == "20261010-11-outage")
+    rev["no_op"] = False
+
+    tables = B.build(config)
+    service_id = f"SLE-{rev['name']}"
+
+    trip_ids = {t["trip_id"] for t in tables["trips"] if t["service_id"] == service_id}
+    assert len(trip_ids) == 16
+    assert all(tid.startswith(f"SLE-{rev['name']}-") for tid in trip_ids)
+    assert any(st["trip_id"] in trip_ids for st in tables["stop_times"])
+
+    added = {(c["service_id"], c["date"]) for c in tables["calendar_dates"] if c["exception_type"] == 1}
+    removed = {(c["service_id"], c["date"]) for c in tables["calendar_dates"] if c["exception_type"] == 2}
+    assert (service_id, "20261010") in added
+    assert (service_id, "20261011") in added
+    assert ("SLE-20261005-weekend", "20261010") in removed
+    assert ("SLE-20261005-weekend", "20261011") in removed
+    # the standing weekday service was never active on a Saturday/Sunday in
+    # the first place, so it must NOT get a spurious suppression row
+    assert not any(sid == "SLE-20261005-weekday" for sid, _ in removed)

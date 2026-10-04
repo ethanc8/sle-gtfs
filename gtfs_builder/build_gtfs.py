@@ -143,6 +143,7 @@ def build(config: dict) -> dict[str, list[dict]]:
     stops = [
         {
             "stop_id": s["stop_id"],
+            "stop_code": s["stop_code"],
             "stop_name": s["stop_name"],
             "stop_lat": s["stop_lat"],
             "stop_lon": s["stop_lon"],
@@ -181,7 +182,7 @@ def build(config: dict) -> dict[str, list[dict]]:
         standing_calendars.append({**cal_row, "start_date": rev["start_date"], "end_date": rev["end_date"]})
 
     for rev in config["revision"]:
-        if rev["type"] != "exception":
+        if rev["type"] != "exception" or rev.get("no_op", False):
             continue
         service_id = f"SLE-{rev['name']}"
         for iso_date in rev["dates"]:
@@ -194,6 +195,8 @@ def build(config: dict) -> dict[str, list[dict]]:
             )
 
     for rev in config["revision"]:
+        if rev["type"] == "exception" and rev.get("no_op", False):
+            continue
         service_id = f"SLE-{rev['name']}"
         extracted_rows = load_extracted(rev["name"])
         by_trip: dict[str, list[dict]] = {}
@@ -245,7 +248,7 @@ def build(config: dict) -> dict[str, list[dict]]:
 FIELDNAMES = {
     "agency": ["agency_id", "agency_name", "agency_url", "agency_timezone", "agency_phone", "agency_lang"],
     "routes": ["route_id", "route_short_name", "route_long_name", "route_type", "route_color", "route_text_color"],
-    "stops": ["stop_id", "stop_name", "stop_lat", "stop_lon", "location_type", "wheelchair_boarding"],
+    "stops": ["stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon", "location_type", "wheelchair_boarding"],
     "calendar": ["service_id", *WEEKDAY_FIELDS, "start_date", "end_date"],
     "calendar_dates": ["service_id", "date", "exception_type"],
     "trips": ["route_id", "service_id", "trip_id", "trip_headsign", "trip_short_name", "direction_id", "bikes_allowed"],

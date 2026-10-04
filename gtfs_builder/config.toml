@@ -40,8 +40,13 @@ feed_version = "2026-10-05"
 # collapsing whitespace and dropping "-"/"." so small punctuation variations
 # don't need their own entry. All SLE stations have step-free (level
 # boarding) access, so wheelchair_boarding is always 1 -- see build_gtfs.py.
+## Stations with no MNR service (SLE-only): stop_code is Amtrak's stop_id
+## for that station (Amtrak's own stop_code column is blank for all of
+## these, so its stop_id is the closest thing to an external code).
+
 [[stops]]
 stop_id = "SLE-NLC"
+stop_code = "NLC"
 stop_name = "New London"
 printed_names = ["New London"]
 stop_lat = 41.354267
@@ -50,6 +55,7 @@ coordinate_source = "amtrak-gtfs-fixed/stops.txt NLC"
 
 [[stops]]
 stop_id = "SLE-OSB"
+stop_code = "OSB"
 stop_name = "Old Saybrook"
 printed_names = ["Old Saybrook"]
 stop_lat = 41.300388
@@ -58,6 +64,7 @@ coordinate_source = "amtrak-gtfs-fixed/stops.txt OSB"
 
 [[stops]]
 stop_id = "SLE-WSB"
+stop_code = "WSB"
 stop_name = "Westbrook"
 printed_names = ["Westbrook"]
 stop_lat = 41.288788
@@ -66,6 +73,7 @@ coordinate_source = "amtrak-gtfs-fixed/stops.txt WSB"
 
 [[stops]]
 stop_id = "SLE-CLN"
+stop_code = "CLN"
 stop_name = "Clinton"
 printed_names = ["Clinton"]
 stop_lat = 41.279457
@@ -74,6 +82,7 @@ coordinate_source = "amtrak-gtfs-fixed/stops.txt CLN"
 
 [[stops]]
 stop_id = "SLE-MDS"
+stop_code = "MDS"
 stop_name = "Madison"
 printed_names = ["Madison"]
 stop_lat = 41.283577
@@ -82,6 +91,7 @@ coordinate_source = "amtrak-gtfs-fixed/stops.txt MDS"
 
 [[stops]]
 stop_id = "SLE-GUI"
+stop_code = "GUI"
 stop_name = "Guilford"
 printed_names = ["Guilford"]
 stop_lat = 41.275604
@@ -90,67 +100,84 @@ coordinate_source = "amtrak-gtfs-fixed/stops.txt GUI"
 
 [[stops]]
 stop_id = "SLE-BNF"
+stop_code = "BNF"
 stop_name = "Branford"
 printed_names = ["Branford"]
 stop_lat = 41.274548
 stop_lon = -72.817223
 coordinate_source = "amtrak-gtfs-fixed/stops.txt BNF"
 
+## Stations shared with Metro-North: stop_id and stop_code both use MNR's
+## own stop_code (from gtfsmnr/stops.txt), not Amtrak's, even where Amtrak
+## also serves the station (e.g. Stamford/New Haven/Bridgeport) -- this is
+## so a future MNR-realtime-to-GTFS-RT converter can match stop_code
+## directly against MNR's own codes without a separate translation table.
+## Coordinates still prefer Amtrak where available (requirement: station
+## locations come from the Amtrak feed) and fall back to MNR's own
+## coordinates only for the 3 stations Amtrak doesn't serve.
+
 [[stops]]
-stop_id = "SLE-NHS"
+stop_id = "SLE-2SS"
+stop_code = "2SS"
 stop_name = "New Haven - State Street"
 printed_names = ["New Haven State Street", "New Haven - State Street"]
 stop_lat = 41.305252
 stop_lon = -72.922089
-coordinate_source = "amtrak-gtfs-fixed/stops.txt STS"
+coordinate_source = "amtrak-gtfs-fixed/stops.txt STS; stop_code from gtfsmnr/stops.txt stop_id 151"
 
 [[stops]]
-stop_id = "SLE-NHV"
+stop_id = "SLE-2NH"
+stop_code = "2NH"
 stop_name = "New Haven"
 printed_names = ["New Haven Union Station", "New Haven - Union Station"]
 stop_lat = 41.297714
 stop_lon = -72.926666
-coordinate_source = "amtrak-gtfs-fixed/stops.txt NHV"
+coordinate_source = "amtrak-gtfs-fixed/stops.txt NHV; stop_code from gtfsmnr/stops.txt stop_id 149"
 
 [[stops]]
-stop_id = "SLE-WHV"
+stop_id = "SLE-2WH"
+stop_code = "2WH"
 stop_name = "West Haven"
 printed_names = ["West Haven"]
 stop_lat = 41.27142
 stop_lon = -72.963488
-coordinate_source = "gtfsmnr/stops.txt stop_id 190 (not an Amtrak stop)"
+coordinate_source = "gtfsmnr/stops.txt stop_id 190 (not an Amtrak stop; also the stop_code source)"
 
 [[stops]]
-stop_id = "SLE-MLF"
+stop_id = "SLE-2MI"
+stop_code = "2MI"
 stop_name = "Milford"
 printed_names = ["Milford"]
 stop_lat = 41.223231
 stop_lon = -73.057647
-coordinate_source = "gtfsmnr/stops.txt stop_id 145 (not an Amtrak stop)"
+coordinate_source = "gtfsmnr/stops.txt stop_id 145 (not an Amtrak stop; also the stop_code source)"
 
 [[stops]]
-stop_id = "SLE-STR"
+stop_id = "SLE-2SR"
+stop_code = "2SR"
 stop_name = "Stratford"
 printed_names = ["Stratford"]
 stop_lat = 41.194255
 stop_lon = -73.131532
-coordinate_source = "gtfsmnr/stops.txt stop_id 143 (not an Amtrak stop)"
+coordinate_source = "gtfsmnr/stops.txt stop_id 143 (not an Amtrak stop; also the stop_code source)"
 
 [[stops]]
-stop_id = "SLE-BRP"
+stop_id = "SLE-2BP"
+stop_code = "2BP"
 stop_name = "Bridgeport"
 printed_names = ["Bridgeport"]
 stop_lat = 41.178005
 stop_lon = -73.187538
-coordinate_source = "amtrak-gtfs-fixed/stops.txt BRP"
+coordinate_source = "amtrak-gtfs-fixed/stops.txt BRP; stop_code from gtfsmnr/stops.txt stop_id 140"
 
 [[stops]]
-stop_id = "SLE-STM"
+stop_id = "SLE-2SM"
+stop_code = "2SM"
 stop_name = "Stamford"
 printed_names = ["Stamford"]
 stop_lat = 41.047131
 stop_lon = -73.54216
-coordinate_source = "amtrak-gtfs-fixed/stops.txt STM"
+coordinate_source = "amtrak-gtfs-fixed/stops.txt STM; stop_code from gtfsmnr/stops.txt stop_id 124"
 
 # Station names that legitimately appear as row labels in the "CONNECTIONS
 # TO/FROM NEW YORK" tables but are Metro-North-only stations (no SLE service)
@@ -182,6 +209,13 @@ excluded_connection_stations = [
 #   exception_type=2 rows suppressing whichever standing service(s) would
 #   otherwise run on those same dates -- see build_gtfs.py
 #   `suppressed_services_for`.
+# no_op = true (exception revisions only): the PDF turned out not to change
+#   SLE's own schedule at all (confirmed by extraction -- see each such
+#   revision's `notes`). build_gtfs.py skips it entirely: no calendar_dates
+#   rows, no trips, no suppression of the standing service, since there's
+#   nothing to add or suppress. Extraction still runs and is still checked
+#   in (see extracted/<name>.csv) as a record of *why* it's a no-op, not
+#   just an assertion that it is one.
 
 [[revision]]
 name = "20260329-weekday"
@@ -221,15 +255,22 @@ pdf = "SLE-10_10-Portal-North-Bridge-MNR-WALK-Bridge-Outage-1.pdf"
 type = "exception"
 day_type = "weekend"
 dates = ["2026-10-10", "2026-10-11"]
+no_op = true
 notes = """
 Portal North Bridge / MNR Walk Bridge outage notice. Extraction confirms
 SLE's own trip numbers and times are byte-identical to the standing
 20261005-weekend revision -- only the MNR connection columns (out of scope,
-requirement #8) differ. Still modeled as a full independent exception
-service (own service_id, own trip_ids/stop_times, suppresses the standing
-weekend service on these two dates) rather than skipped, per the project
-owner: every exception PDF gets this treatment uniformly, whether or not
-SLE's own schedule actually changed, so the pipeline doesn't need a special
-"no-op" case and generalizes cleanly to a future outage that DOES change
-SLE's own trips.
+requirement #8) differ, so no_op=true: nothing is added to or suppressed in
+the built feed for this revision.
+
+Before being marked no_op, this revision was deliberately built the OTHER
+way first -- as a full independent exception service (own service_id, own
+trip_ids/stop_times, exception_type=2 suppression of the standing weekend
+service on these two dates) -- specifically to prove that mechanism works
+end to end (including a deliberate bug injection + Rust validator check) on
+a real PDF before a future outage that DOES change SLE's own trips needs it
+for real. See llm_notes/SPEC.md section 12 for that history; the mechanism
+itself (`suppressed_services_for`, the no_op-override integration test in
+test_build_gtfs.py) stays in the pipeline, it's just not exercised by this
+particular revision's default config anymore.
 """

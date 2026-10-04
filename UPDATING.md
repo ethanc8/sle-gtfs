@@ -40,12 +40,30 @@ See `gtfs_builder/config.toml`'s own comments for the two revision shapes:
   service that is — `suppressed_services_for()` does that from the calendar
   semantics directly.
 
-If a new station appears, add a `[[stops]]` entry (`stop_id` in the
-`SLE-XXX` namespace, `stop_name` for display/headsigns, `printed_names` for
-every spelling the PDFs use, and coordinates — see the comment at the top of
-`config.toml` for where to source those; **do not** have the pipeline read
-`sources/amtrak-gtfs-fixed/`/`sources/gtfsmnr/` at build time, copy the
-numbers in by hand once, the way every existing entry did).
+  Set **`no_op = true`** on an exception revision once extraction confirms
+  it doesn't actually change SLE's own schedule (e.g. an outage notice that
+  only affects MNR connections) — `build_gtfs.py` then skips it entirely
+  (no trips, no calendar_dates rows), rather than emitting a redundant
+  duplicate service. Extract it and keep the `extracted/<name>.csv` file
+  checked in either way, as the record of *why* it's a no-op — see the
+  `20261010-11-outage` entry's `notes` for the expected level of detail.
+  Leave `no_op` unset (or `false`) for a real exception that does change
+  something.
+
+If a new station appears, add a `[[stops]]` entry. `stop_name` is for
+display/headsigns, `printed_names` lists every spelling the PDFs use. For
+`stop_id`/`stop_code`: if the station is served by Metro-North, use MNR's
+own `stop_code` from `sources/gtfsmnr/stops.txt` (as `SLE-<code>` /
+`<code>` respectively) — not Amtrak's or an invented one — so a future
+MNR-realtime-to-GTFS-RT converter can match stops directly; otherwise use
+Amtrak's stop_id the way the existing SLE-only stations do. Coordinates:
+see the comment at the top of `config.toml` for sourcing (Amtrak preferred,
+MNR fallback for the 3 stations Amtrak doesn't serve). **Do not** have the
+pipeline read `sources/amtrak-gtfs-fixed/`/`sources/gtfsmnr/` at build time
+— copy the numbers in by hand once, the way every existing entry did.
+Changing a `stop_id` after the fact requires re-running `make extract-draft`
+and re-promoting every `extracted/*.csv` (the station lookup is baked in at
+extraction time).
 
 ## 3. Extract the new timetable
 
