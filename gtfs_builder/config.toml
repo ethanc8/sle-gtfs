@@ -1,0 +1,235 @@
+# CTrail Shore Line East GTFS -- everything that is *data* rather than
+# PDF-parsing *logic*. See llm_notes/SPEC.md for the reasoning behind every
+# non-obvious choice here. This file is meant to be hand-editable by a human
+# or an LLM agent without touching gtfs_builder/*.py -- see SPEC.md section 9
+# and UPDATING.md for the checklist to follow when a new timetable PDF
+# arrives.
+#
+# Station coordinates below were copied once from sources/amtrak-gtfs-fixed/
+# and sources/gtfsmnr/ (see each stop's `coordinate_source` comment) and are
+# now hand-maintained here -- the build does NOT read those feeds at runtime.
+
+[agency]
+agency_id = "SLE"
+agency_name = "CTrail Shore Line East"
+agency_url = "https://shorelineeast.com"
+agency_phone = "1-877-287-4337"
+agency_timezone = "America/New_York"
+agency_lang = "en"
+
+[route]
+route_id = "SLE"
+route_short_name = "SLE"
+route_long_name = "Shore Line East"
+route_type = 2  # rail
+route_color = "EA0D2A"
+route_text_color = "FFFFFF"
+
+[feed_info]
+feed_publisher_name = "CTrail Shore Line East"
+feed_publisher_url = "https://shorelineeast.com"
+feed_lang = "en"
+feed_start_date = "2026-03-29"
+feed_end_date = "2026-11-01"
+feed_version = "2026-10-05"
+
+# One entry per station that appears in any timetable PDF. `printed_names`
+# lists every exact spelling seen across the different tables (the "TO NEW
+# HAVEN"/"TO NEW LONDON" tables and the "CONNECTIONS" tables spell the two
+# New Haven stations slightly differently) -- matched case-sensitively after
+# collapsing whitespace and dropping "-"/"." so small punctuation variations
+# don't need their own entry. All SLE stations have step-free (level
+# boarding) access, so wheelchair_boarding is always 1 -- see build_gtfs.py.
+[[stops]]
+stop_id = "SLE-NLC"
+stop_name = "New London"
+printed_names = ["New London"]
+stop_lat = 41.354267
+stop_lon = -72.093224
+coordinate_source = "amtrak-gtfs-fixed/stops.txt NLC"
+
+[[stops]]
+stop_id = "SLE-OSB"
+stop_name = "Old Saybrook"
+printed_names = ["Old Saybrook"]
+stop_lat = 41.300388
+stop_lon = -72.376816
+coordinate_source = "amtrak-gtfs-fixed/stops.txt OSB"
+
+[[stops]]
+stop_id = "SLE-WSB"
+stop_name = "Westbrook"
+printed_names = ["Westbrook"]
+stop_lat = 41.288788
+stop_lon = -72.447998
+coordinate_source = "amtrak-gtfs-fixed/stops.txt WSB"
+
+[[stops]]
+stop_id = "SLE-CLN"
+stop_name = "Clinton"
+printed_names = ["Clinton"]
+stop_lat = 41.279457
+stop_lon = -72.528313
+coordinate_source = "amtrak-gtfs-fixed/stops.txt CLN"
+
+[[stops]]
+stop_id = "SLE-MDS"
+stop_name = "Madison"
+printed_names = ["Madison"]
+stop_lat = 41.283577
+stop_lon = -72.599442
+coordinate_source = "amtrak-gtfs-fixed/stops.txt MDS"
+
+[[stops]]
+stop_id = "SLE-GUI"
+stop_name = "Guilford"
+printed_names = ["Guilford"]
+stop_lat = 41.275604
+stop_lon = -72.673515
+coordinate_source = "amtrak-gtfs-fixed/stops.txt GUI"
+
+[[stops]]
+stop_id = "SLE-BNF"
+stop_name = "Branford"
+printed_names = ["Branford"]
+stop_lat = 41.274548
+stop_lon = -72.817223
+coordinate_source = "amtrak-gtfs-fixed/stops.txt BNF"
+
+[[stops]]
+stop_id = "SLE-NHS"
+stop_name = "New Haven - State Street"
+printed_names = ["New Haven State Street", "New Haven - State Street"]
+stop_lat = 41.305252
+stop_lon = -72.922089
+coordinate_source = "amtrak-gtfs-fixed/stops.txt STS"
+
+[[stops]]
+stop_id = "SLE-NHV"
+stop_name = "New Haven"
+printed_names = ["New Haven Union Station", "New Haven - Union Station"]
+stop_lat = 41.297714
+stop_lon = -72.926666
+coordinate_source = "amtrak-gtfs-fixed/stops.txt NHV"
+
+[[stops]]
+stop_id = "SLE-WHV"
+stop_name = "West Haven"
+printed_names = ["West Haven"]
+stop_lat = 41.27142
+stop_lon = -72.963488
+coordinate_source = "gtfsmnr/stops.txt stop_id 190 (not an Amtrak stop)"
+
+[[stops]]
+stop_id = "SLE-MLF"
+stop_name = "Milford"
+printed_names = ["Milford"]
+stop_lat = 41.223231
+stop_lon = -73.057647
+coordinate_source = "gtfsmnr/stops.txt stop_id 145 (not an Amtrak stop)"
+
+[[stops]]
+stop_id = "SLE-STR"
+stop_name = "Stratford"
+printed_names = ["Stratford"]
+stop_lat = 41.194255
+stop_lon = -73.131532
+coordinate_source = "gtfsmnr/stops.txt stop_id 143 (not an Amtrak stop)"
+
+[[stops]]
+stop_id = "SLE-BRP"
+stop_name = "Bridgeport"
+printed_names = ["Bridgeport"]
+stop_lat = 41.178005
+stop_lon = -73.187538
+coordinate_source = "amtrak-gtfs-fixed/stops.txt BRP"
+
+[[stops]]
+stop_id = "SLE-STM"
+stop_name = "Stamford"
+printed_names = ["Stamford"]
+stop_lat = 41.047131
+stop_lon = -73.54216
+coordinate_source = "amtrak-gtfs-fixed/stops.txt STM"
+
+# Station names that legitimately appear as row labels in the "CONNECTIONS
+# TO/FROM NEW YORK" tables but are Metro-North-only stations (no SLE service)
+# -- rows with one of these labels are silently skipped during extraction
+# rather than treated as an unmapped-station error. A label that matches
+# neither this list nor `stops` above is an extraction bug or a genuinely new
+# station and should raise, not be silently dropped.
+#
+# NOTE: this table must stay ABOVE the [[stops]]/[[revision]] arrays-of-tables
+# below -- in TOML, a bare `key = value` after an array-of-tables header
+# attaches to the last entry of that array, not to the document root.
+[extraction]
+excluded_connection_stations = [
+    "South Norwalk",
+    "Greenwich",
+    "Harlem 125th St",
+    "Grand Central Terminal",
+]
+
+# Revisions actually included in the shipped feed (requirement coverage:
+# 2026-03-29 through 2026-11-01). See SPEC.md section 9 for how "standing"
+# vs. "exception" revisions differ and UPDATING.md for how to add a new one.
+#
+# type = "standing": ordinary day-of-week calendar.txt service over
+#   [start_date, end_date].
+# type = "exception": calendar_dates.txt-only service active on exactly
+#   `dates`. Every trip under it gets its own trip_id/stop_times, entirely
+#   separate from any standing-revision trip, and build_gtfs.py emits
+#   exception_type=2 rows suppressing whichever standing service(s) would
+#   otherwise run on those same dates -- see build_gtfs.py
+#   `suppressed_services_for`.
+
+[[revision]]
+name = "20260329-weekday"
+pdf = "SLE-3_29-MNR-Schedule-Change.pdf"
+type = "standing"
+day_type = "weekday"
+start_date = "2026-03-29"
+end_date = "2026-10-04"
+
+[[revision]]
+name = "20260329-weekend"
+pdf = "SLE-3_29-MNR-Schedule-Change.pdf"
+type = "standing"
+day_type = "weekend"
+start_date = "2026-03-29"
+end_date = "2026-10-04"
+
+[[revision]]
+name = "20261005-weekday"
+pdf = "SLE-October-5th-schedule_edit.pdf"
+type = "standing"
+day_type = "weekday"
+start_date = "2026-10-05"
+end_date = "2026-11-01"
+
+[[revision]]
+name = "20261005-weekend"
+pdf = "SLE-October-5th-schedule_edit.pdf"
+type = "standing"
+day_type = "weekend"
+start_date = "2026-10-05"
+end_date = "2026-11-01"
+
+[[revision]]
+name = "20261010-11-outage"
+pdf = "SLE-10_10-Portal-North-Bridge-MNR-WALK-Bridge-Outage-1.pdf"
+type = "exception"
+day_type = "weekend"
+dates = ["2026-10-10", "2026-10-11"]
+notes = """
+Portal North Bridge / MNR Walk Bridge outage notice. Extraction confirms
+SLE's own trip numbers and times are byte-identical to the standing
+20261005-weekend revision -- only the MNR connection columns (out of scope,
+requirement #8) differ. Still modeled as a full independent exception
+service (own service_id, own trip_ids/stop_times, suppresses the standing
+weekend service on these two dates) rather than skipped, per the project
+owner: every exception PDF gets this treatment uniformly, whether or not
+SLE's own schedule actually changed, so the pipeline doesn't need a special
+"no-op" case and generalizes cleanly to a future outage that DOES change
+SLE's own trips.
+"""

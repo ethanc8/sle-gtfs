@@ -1,0 +1,8 @@
+/build/
+/extracted/*.draft.csv
+/.pixi/
+/.cargo-home/
+/validator/target/
+__pycache__/
+*.pyc
+.pytest_cache/

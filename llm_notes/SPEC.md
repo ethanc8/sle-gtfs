@@ -1,7 +1,10 @@
 # CTrail Shore Line East GTFS — build plan
 
-Status: **planning, not yet implemented**. This is the living plan — update it
-as decisions change instead of re-litigating them in chat. Modeled directly on
+Status: **implemented** (`make all` builds and validates clean). See section
+12 for what changed between this plan and the actual implementation — read
+that section first if you're trying to understand the real pipeline rather
+than the design history. This is still the living plan — update it as
+decisions change instead of re-litigating them in chat. Modeled directly on
 the sibling project at
 `/home/ethan/Projects/Transit/NorthAmerica/Maryland/marc-camden-brunswick-gtfs`
 (see its `PLAN.md`/`README.md`/`UPDATING.md`/`PDF-TO-GTFS-LESSONS.md`), whose
@@ -405,25 +408,103 @@ Makefile targets, same shape as the MARC project: `render-pdfs`,
   specific diff/assertion that a trip's New Haven time, pulled from whichever
   table(s) mention it, agrees everywhere it appears.
 
-## 11. Remaining open items
+## 11. Open items from the planning phase — resolved
 
-1. `wheelchair_boarding`: not clearly stated per-station in the SLE PDFs.
-   Propose leaving `0` (unknown) for the 7 SLE-only stations, and optionally
-   copying MNR's value for the 6 name-overlapping stations (West
-   Haven/Milford/Stratford/Bridgeport/New Haven/Stamford) as a courtesy,
-   purely as data — no ID sharing implied. OK to do that, or leave all
-   unknown?
-2. `bikes_allowed`: the PDFs state *"Your bicycle can now ride on board every
-   CTrail Shore Line East train"* with no reservation needed (unlike Amtrak).
-   Propose `bikes_allowed=1` on every SLE trip. Confirm?
-3. `feed_info.txt`: propose `feed_publisher_name=CTrail Shore Line East`,
-   `feed_publisher_url=https://shorelineeast.com`,
-   `feed_start_date=2026-03-29`, `feed_end_date=2026-11-01`,
-   `feed_version` = today's build date. Confirm, or specify differently?
-4. The config schema's `exception` revision type (§9) currently only has a
-   `no_op` escape hatch, since that's all we need for the one exception PDF
-   in hand. Before a *real* future outage PDF arrives, this needs fields for
-   what actually changes (cancelled trips, added trips, altered stop
-   patterns) — I'll design that properly against the actual PDF when one
-   shows up rather than guessing at a schema now; flagging so it's not
-   forgotten.
+1. `wheelchair_boarding`: resolved — the project owner confirmed all SLE
+   stations have step-free access, so this is `1` for every stop
+   unconditionally. No MNR data borrowed.
+2. `bikes_allowed`: resolved — `1` on every trip, confirmed.
+3. `feed_info.txt`: resolved — used as proposed, with a static
+   `feed_version` (the latest source PDF's effective date, `2026-10-05`)
+   rather than a wall-clock build date, for reproducible builds.
+4. The exception-revision schema question is now moot: the project owner
+   clarified that *every* exception revision — whether or not it actually
+   changes SLE's own schedule — gets a fully independent service_id and its
+   own trip_ids/stop_times, with the standing calendar suppressed on those
+   dates. There's no separate "what changed" schema needed; see section 12.
+
+## 12. What changed during implementation
+
+A few things turned out differently than planned once real PDFs were
+inspected closely in code (not just by eye) — recorded here so this document
+stays trustworthy as a description of what the pipeline actually does.
+
+- **The tables have real horizontal rule lines.** The original plan (section
+  7) assumed, by analogy with the MARC sibling project, that row boundaries
+  would need to come from clustering word y-positions, with no horizontal
+  vector lines to rely on. This was wrong for SLE's PDFs specifically — the
+  project owner caught it: `page.lines` contains a horizontal rule at every
+  row boundary, including the header row's. `pdf_grid.py` ended up using
+  **both** axes as true ruled-grid detection (`column_boundaries`/
+  `row_boundaries`/`Grid`), which is simpler and more precise than the
+  word-clustering approach MARC needed — no row_gap tuning at all. Don't
+  assume a technique that worked on a different agency's PDFs applies here
+  without checking `page.lines` directly first.
+- **Track badges are placed in "spacer" columns, not attached to specific
+  trip columns**, and their value *propagates forward* to every real column
+  until the next badge. Confirmed empirically by cropping and comparing
+  badge images at different x-positions within the same row (see the
+  session transcript around `ocr_track_badge`/`track_for_columns`) — the
+  same physical station can show `TRACK 1` for its morning trains and
+  `TRACK 2` for its afternoon trains, with the badge sitting in a blank grid
+  column between trip-number groups rather than inside any specific trip's
+  own cell. `pdf_extract.track_for_columns` implements the propagation; see
+  its test in `test_pdf_extract.py` for a worked example.
+- **`pdf_extract.py` ended up as one module**, not split into a separate
+  `pdf_track_badges.py` as section 9's repo layout sketched — the track-badge
+  OCR is small enough, and tightly enough coupled to the same `Grid`/row
+  concept as text-cell extraction, that splitting it added indirection
+  without a real benefit.
+- **One CONNECTIONS table's header text is letter-spaced** enough that
+  pdfplumber reads each glyph as a separate "word" (e.g. `SLE T H RU 16 3 3`
+  instead of `SLE THRU 1633`). Column classification strips all whitespace
+  before pattern-matching rather than assuming a single space between
+  tokens — see `COLUMN_HEADER_RE`'s comment in `pdf_extract.py`.
+- **Tesseract is occasionally flaky on these small crops**: the exact same
+  crop can OCR to empty text on one call and succeed on a retry (observed,
+  not theoretical — see the session transcript). `ocr_track_badge` retries
+  across a handful of crop-padding/page-segmentation-mode combinations
+  before giving up, rather than trusting the first attempt. Also: the arrow
+  glyph (▷) after the digit is sometimes misread as an extra trailing digit
+  with no separating space (`TRACK 2` → `"TRACK 20"`) — matching the first
+  single digit *character*, not the first run of digits, avoids this.
+- **MNR stop_id compatibility was dropped** (confirmed with the owner,
+  section 0) once it became clear MNR's feed doesn't contain the thru-trains
+  at all — sections 3-5's original MNR-shared-stop_id design was replaced
+  with a single flat `SLE-*` namespace for all 14 stations. Coordinates
+  still come from Amtrak (primary) or MNR (fallback for West Haven/Milford/
+  Stratford, which Amtrak doesn't serve) — but as literal numbers baked into
+  `config.toml` once, not a runtime dependency on either feed (per the
+  owner: "the converter probably shouldn't read the Amtrak or MNR GTFS
+  feeds; anything it needs should be in the config file").
+- **Exception revisions are fully independent calendar services**, per
+  explicit owner direction: every trip under an exception revision gets its
+  own `trip_id`/`stop_times`, *even when byte-identical* to a standing
+  revision's trips (the 2026-10-10/11 outage's SLE schedule, confirmed
+  identical to the standing weekend pattern — section 2.4 — is still built
+  as 16 fully separate trips under `SLE-20261010-11-outage`, not reused from
+  `SLE-20261005-weekend`), and the standing service is suppressed on those
+  dates via a `calendar_dates.txt exception_type=2` row
+  (`build_gtfs.suppressed_services_for`). This is checked twice,
+  independently: once in Python (`test_build_gtfs.py`) and once in the Rust
+  validator (`validator/src/main.rs`), which re-derives calendar activity
+  from the built feed's own `calendar.txt`/`calendar_dates.txt` rather than
+  trusting `build_gtfs.py`'s internal bookkeeping.
+- **`trip_id` includes the revision name** (`SLE-<revision>-<trip_short_name>`,
+  e.g. `SLE-20261005-weekday-1633`), not just `SLE-<trip_short_name>` as an
+  early draft of section 4 proposed — necessary because the same printed
+  trip number (e.g. `1633`) is reused across different revisions as "the
+  same conceptual run," but GTFS requires `trip_id` to be unique feed-wide.
+- **`sources/older_examples/`** (added by the project owner mid-implementation:
+  an MLK-day PDF, three Thanksgiving-week PDFs, and an independent prior-year
+  standing PDF) are used as **extraction regression tests only**
+  (`test_pdf_extract.py::test_extract_older_examples`), not as additional
+  `[[revision]]` entries in the shipped feed — their dates fall outside (MLK
+  2026-01-19) or after (Thanksgiving 2025, predating this feed's 2026-03-29
+  start) the feed's actual coverage window, and their true supersession
+  history isn't something this project can know confidently. They did prove
+  valuable as-is: extraction generalized to all of them without any
+  PDF-specific code changes, including the letter-spacing and track-badge
+  issues above, which is exactly what they were added to confirm (requirement
+  #7 — a future real outage/holiday PDF should need a config change, not new
+  parsing code).

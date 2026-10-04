@@ -1,0 +1,17 @@
+[workspace]
+authors = ["ethanc8 <echaroenpitaks@gmail.com>"]
+channels = ["conda-forge"]
+name = "sle-gtfs"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = ">=3.13,<3.14"
+pdfplumber = ">=0.11.10,<0.12"
+pytest = ">=9.1.1,<10"
+poppler = ">=26.9.0,<27"
+pillow = ">=11,<12"
+pytesseract = ">=0.3.13,<0.4"
+tesseract = ">=5.5,<6"
