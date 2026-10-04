@@ -1,0 +1,63 @@
+name: Build GTFS feed and publish release
+
+on:
+  push:
+    branches:
+      - trunk
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          cache: true
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry and build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: validator -> target
+          cache-directories: .cargo-home
+
+      - name: Read the feed's effective date range
+        id: dates
+        run: |
+          start=$(grep -oP 'feed_start_date = "\K[0-9-]+' gtfs_builder/config.toml | tr -d '-')
+          end=$(grep -oP 'feed_end_date = "\K[0-9-]+' gtfs_builder/config.toml | tr -d '-')
+          echo "start=$start" >> "$GITHUB_OUTPUT"
+          echo "end=$end" >> "$GITHUB_OUTPUT"
+
+      - name: Build and validate GTFS feed
+        run: make all
+
+      - name: Set release tag
+        id: tag
+        run: |
+          short_sha=$(git rev-parse --short HEAD)
+          echo "short_sha=$short_sha" >> "$GITHUB_OUTPUT"
+          echo "tag=gtfs-${{ steps.dates.outputs.start }}-$short_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: GTFS feed ${{ steps.dates.outputs.start }}-${{ steps.dates.outputs.end }} (${{ steps.tag.outputs.short_sha }})
+          body: |
+            Unofficial CTrail Shore Line East GTFS feed, effective
+            ${{ steps.dates.outputs.start }} through ${{ steps.dates.outputs.end }},
+            built from the PDFs in `sources/` at commit ${{ github.sha }}.
+
+            See llm_notes/SPEC.md for how this feed was built and its known limitations.
+          files: build/sle-gtfs.zip
+          make_latest: true
