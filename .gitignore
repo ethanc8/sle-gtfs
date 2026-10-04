@@ -3,6 +3,7 @@
 /.pixi/
 /.cargo-home/
 /validator/target/
+/schedule_watcher/target/
 __pycache__/
 *.pyc
 .pytest_cache/

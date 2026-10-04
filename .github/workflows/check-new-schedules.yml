@@ -1,0 +1,102 @@
+name: Check for new Shore Line East schedule PDFs
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # Mondays and Thursdays, 13:00 UTC. CTrail publishes new schedules
+    # infrequently (a few times a year) plus occasional exception-date
+    # notices; twice a week is enough to catch one promptly without being
+    # noisy. Adjust freely -- this isn't load-bearing for anything else.
+    - cron: "0 13 * * 1,4"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry and build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: schedule_watcher -> target
+          cache-directories: .cargo-home
+
+      # sle-schedule-watcher's `check` subcommand exits 1 (not an error) when
+      # it finds schedule PDFs on shorelineeast.com/schedules/ that aren't
+      # present anywhere under sources/ -- see schedule_watcher/README.md.
+      # Any OTHER nonzero exit is a real failure (network error, page
+      # structure broke the parser, etc.) and should fail this job loudly.
+      - name: Check shorelineeast.com/schedules/ for new PDFs
+        id: check
+        env:
+          CARGO_HOME: ${{ github.workspace }}/.cargo-home
+        run: |
+          set +e
+          output=$(cargo run --manifest-path schedule_watcher/Cargo.toml -- check --sources-dir sources 2>&1)
+          status=$?
+          set -e
+          echo "$output"
+          {
+            echo "output<<SCHEDULE_WATCHER_EOF"
+            echo "$output"
+            echo "SCHEDULE_WATCHER_EOF"
+          } >> "$GITHUB_OUTPUT"
+          if [ "$status" != 0 ] && [ "$status" != 1 ]; then
+            echo "::error::sle-schedule-watcher exited unexpectedly (status $status) -- see log above"
+            exit 1
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Find existing alert issue
+        id: existing
+        if: steps.check.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_TITLE: "New Shore Line East schedule PDF(s) detected"
+        run: |
+          number=$(gh issue list --repo "${{ github.repository }}" --state open \
+            --search "\"$ISSUE_TITLE\" in:title" --json number --jq '.[0].number // empty')
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+
+      # The alert itself: open a new issue, or comment on the existing one
+      # (so repeated runs while the PDF is still unconverted don't spam new
+      # issues every time this workflow fires).
+      - name: Open or update alert issue
+        if: steps.check.outputs.status == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="New Shore Line East schedule PDF(s) detected"
+          body="sle-schedule-watcher found schedule PDF(s) on https://shorelineeast.com/schedules/ \
+          that aren't present under \`sources/\` in this repo as of commit ${{ github.sha }}:
+
+          \`\`\`
+          ${{ steps.check.outputs.output }}
+          \`\`\`
+
+          See \`UPDATING.md\` for how to bring the feed up to date. This issue is \
+          maintained automatically by \`.github/workflows/check-new-schedules.yml\` and \
+          will be closed automatically once the PDF(s) above are added under \`sources/\`."
+
+          if [ -n "${{ steps.existing.outputs.number }}" ]; then
+            gh issue comment "${{ steps.existing.outputs.number }}" --repo "${{ github.repository }}" --body "$body"
+          else
+            gh issue create --repo "${{ github.repository }}" --title "$title" --body "$body"
+          fi
+
+      - name: Close alert issue if nothing new remains
+        if: steps.check.outputs.status == '0' && steps.existing.outputs.number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment "${{ steps.existing.outputs.number }}" --repo "${{ github.repository }}" \
+            --body "sle-schedule-watcher no longer finds any new schedule PDFs on https://shorelineeast.com/schedules/ -- closing."
+          gh issue close "${{ steps.existing.outputs.number }}" --repo "${{ github.repository }}"

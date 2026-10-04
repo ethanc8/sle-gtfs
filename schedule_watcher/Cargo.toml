@@ -1,0 +1,24 @@
+[package]
+name = "sle_schedule_watcher"
+version = "0.1.0"
+edition = "2024"
+description = "Watches https://shorelineeast.com/schedules/ for schedule PDFs this repo hasn't seen yet"
+license = "MIT"
+
+[lib]
+name = "sle_schedule_watcher"
+path = "src/lib.rs"
+
+[[bin]]
+name = "sle-schedule-watcher"
+path = "src/main.rs"
+
+[dependencies]
+scraper = "0.20"
+url = "2"
+thiserror = "2"
+clap = { version = "4", features = ["derive"] }
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+
+[dev-dependencies]
+tempfile = "3"

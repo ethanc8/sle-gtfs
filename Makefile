@@ -12,15 +12,18 @@ PIXI := pixi run --
 # cargo needs a writable registry cache; keep it inside the repo instead of ~/.cargo.
 export CARGO_HOME := $(CURDIR)/.cargo-home
 
-.PHONY: all render-pdfs extract-draft build validate test clean
+.PHONY: all render-pdfs extract-draft build validate test check-new-schedules clean
 
 all: test build validate
 
 # Unit tests for the trickiest logic in gtfs_builder (grid/column detection,
 # time parsing and midnight rollover, the exception-calendar suppression
-# logic). See gtfs_builder/test_*.py.
+# logic) and schedule_watcher (both run offline -- gtfs_builder's PDF tests
+# read from sources/, schedule_watcher's page-parsing tests read from its
+# own references/ snapshot, neither hits the network).
 test:
 	$(PIXI) pytest gtfs_builder
+	cargo test --manifest-path schedule_watcher/Cargo.toml
 
 # Render every source PDF page to PNG so timetable extraction can be checked
 # by eye.
@@ -45,6 +48,13 @@ build:
 # calendar-suppression invariant.
 validate: build
 	cargo run --manifest-path validator/Cargo.toml -- build/sle-gtfs.zip
+
+
+# Check shorelineeast.com/schedules/ (network access required) for schedule
+# PDF links not already present anywhere under sources/. Exits nonzero if
+# any are found -- see schedule_watcher/README.md.
+check-new-schedules:
+	cargo run --manifest-path schedule_watcher/Cargo.toml -- check --sources-dir sources
 
 clean:
 	rm -rf build
