@@ -29,18 +29,35 @@ jobs:
           workspaces: schedule_watcher -> target
           cache-directories: .cargo-home
 
+      # Build separately from running it (see the next step): cargo's own
+      # build chatter must not end up in `output` below.
+      - name: Build sle-schedule-watcher
+        env:
+          CARGO_HOME: ${{ github.workspace }}/.cargo-home
+        run: cargo build --manifest-path schedule_watcher/Cargo.toml
+
       # sle-schedule-watcher's `check` subcommand exits 1 (not an error) when
       # it finds schedule PDFs on shorelineeast.com/schedules/ that aren't
       # present anywhere under sources/ -- see schedule_watcher/README.md.
       # Any OTHER nonzero exit is a real failure (network error, page
       # structure broke the parser, etc.) and should fail this job loudly.
+      #
+      # Run via the already-built binary (not `cargo run`): `cargo run`'s own
+      # output (e.g. "Finished `dev` profile...", with literal backticks)
+      # would otherwise end up inside $output below. That bit this workflow
+      # once already -- output ends up embedded in a double-quoted bash
+      # string two steps down, and GitHub Actions' ${{ }} substitution is
+      # textual and happens *before* bash parses the script, so any
+      # backtick in that text becomes real command substitution syntax to
+      # bash. See "Open or update alert issue" for the other half of the
+      # fix (passing values through env: instead of ${{ }} inside run:).
       - name: Check shorelineeast.com/schedules/ for new PDFs
         id: check
         env:
           CARGO_HOME: ${{ github.workspace }}/.cargo-home
         run: |
           set +e
-          output=$(cargo run --manifest-path schedule_watcher/Cargo.toml -- check --sources-dir sources 2>&1)
+          output=$(schedule_watcher/target/debug/sle-schedule-watcher check --sources-dir sources 2>&1)
           status=$?
           set -e
           echo "$output"
@@ -69,25 +86,37 @@ jobs:
       # The alert itself: open a new issue, or comment on the existing one
       # (so repeated runs while the PDF is still unconverted don't spam new
       # issues every time this workflow fires).
+      #
+      # $OUTPUT (sle-schedule-watcher's own stdout, see above) and
+      # $EXISTING_NUMBER both come from outside this script -- one from an
+      # external website via a previous step, one from a prior `gh` call --
+      # so both are passed in via env: and referenced as plain bash
+      # variables, never spliced into the script text via ${{ }}. A bash
+      # variable's *value* is never re-parsed for shell syntax the way
+      # text substituted by ${{ }} is, which is what makes this safe against
+      # arbitrary content (backticks, $(), etc.) in either one.
       - name: Open or update alert issue
         if: steps.check.outputs.status == '1'
         env:
           GH_TOKEN: ${{ github.token }}
+          OUTPUT: ${{ steps.check.outputs.output }}
+          EXISTING_NUMBER: ${{ steps.existing.outputs.number }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
           title="New Shore Line East schedule PDF(s) detected"
-          body="sle-schedule-watcher found schedule PDF(s) on https://shorelineeast.com/schedules/ \
-          that aren't present under \`sources/\` in this repo as of commit ${{ github.sha }}:
+          body="sle-schedule-watcher found schedule PDF(s) on https://shorelineeast.com/schedules/
+          that aren't present under \`sources/\` in this repo as of commit $COMMIT_SHA:
 
           \`\`\`
-          ${{ steps.check.outputs.output }}
+          $OUTPUT
           \`\`\`
 
-          See \`UPDATING.md\` for how to bring the feed up to date. This issue is \
-          maintained automatically by \`.github/workflows/check-new-schedules.yml\` and \
+          See \`UPDATING.md\` for how to bring the feed up to date. This issue is
+          maintained automatically by \`.github/workflows/check-new-schedules.yml\` and
           will be closed automatically once the PDF(s) above are added under \`sources/\`."
 
-          if [ -n "${{ steps.existing.outputs.number }}" ]; then
-            gh issue comment "${{ steps.existing.outputs.number }}" --repo "${{ github.repository }}" --body "$body"
+          if [ -n "$EXISTING_NUMBER" ]; then
+            gh issue comment "$EXISTING_NUMBER" --repo "${{ github.repository }}" --body "$body"
           else
             gh issue create --repo "${{ github.repository }}" --title "$title" --body "$body"
           fi
@@ -96,7 +125,8 @@ jobs:
         if: steps.check.outputs.status == '0' && steps.existing.outputs.number != ''
         env:
           GH_TOKEN: ${{ github.token }}
+          EXISTING_NUMBER: ${{ steps.existing.outputs.number }}
         run: |
-          gh issue comment "${{ steps.existing.outputs.number }}" --repo "${{ github.repository }}" \
+          gh issue comment "$EXISTING_NUMBER" --repo "${{ github.repository }}" \
             --body "sle-schedule-watcher no longer finds any new schedule PDFs on https://shorelineeast.com/schedules/ -- closing."
-          gh issue close "${{ steps.existing.outputs.number }}" --repo "${{ github.repository }}"
+          gh issue close "$EXISTING_NUMBER" --repo "${{ github.repository }}"
