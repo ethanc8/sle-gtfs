@@ -302,3 +302,11 @@ previously-shipped 20260329-weekday.csv and 20261005-weekend.csv -- see
 llm_notes/SPEC.md section 15 for the full story and the OCR pipeline
 changes made in response (digit whitelist, multi-resolution majority vote).
 """
+
+[[revision]]
+name = "20261024-25-31-01-outage"
+pdf = "SLE-10_5-New-SLE-Schedule-Weekend-ONLY.pdf"
+type = "exception"
+day_type = "weekend"
+dates = ["2026-10-24", "2026-10-25", "2026-10-31", "2026-11-01"]
+no_op = true

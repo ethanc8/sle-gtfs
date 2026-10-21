@@ -35,8 +35,12 @@ render-pdfs:
 # [[revision]] list. Never overwrites the reviewed extracted/*.csv files
 # directly -- output goes to extracted/*.draft.csv so manual corrections
 # already promoted into extracted/*.csv aren't silently clobbered.
+#
+# Pass REVISION=<name> to extract just one entry (matching its `name` in
+# config.toml) instead of all of them, e.g.:
+#   make extract-draft REVISION=20261012-outage
 extract-draft:
-	$(PIXI) python -m gtfs_builder.pdf_extract --out-dir extracted
+	$(PIXI) python -m gtfs_builder.pdf_extract --out-dir extracted $(if $(REVISION),--revision $(REVISION))
 
 # Build the GTFS feed from extracted/ + gtfs_builder/config.toml.
 build:
