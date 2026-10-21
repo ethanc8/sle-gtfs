@@ -86,9 +86,20 @@ this because the extraction "usually works." Pay particular attention to:
 - Any trip that changed from a previous revision (new trip numbers, added/
   removed stops) — these are the most likely source of a real schedule
   change you need to get right, not an extraction bug.
-- Track badges — OCR occasionally needs a retry internally (see
-  `pdf_extract.OCR_ATTEMPTS`) and has a plausibility check (1-9), but neither
-  catches a confident misread of e.g. "3" as "8".
+- Track badges — this is the single riskiest field in the whole pipeline.
+  OCR here has been observed to confidently misread one digit as another
+  (not just fail outright), and to give a *different* wrong answer on
+  separate runs of the exact same code against the exact same PDF (real
+  nondeterminism, not flakiness from environment/load) — see
+  llm_notes/SPEC.md section 15 for how this was found (it had already
+  silently corrupted two previously-shipped revisions). `pdf_extract.
+  OCR_ATTEMPTS`'s multi-resolution majority vote reduces this but does not
+  eliminate it. **Don't trust the draft's track column just because it
+  looks plausible (a value in 1-9)** — crop and look at each badge, or at
+  minimum cross-check against another revision that shares the same
+  trip/station if one exists (see `test_pdf_extract.py`'s
+  `test_noop_outage_matches_standing_schedule_exactly` for the kind of
+  cross-revision check this pattern enables).
 - If `pdf_extract.py` raises `KeyError: unmapped station label ...`: either
   a genuinely new station (see step 2) or a station name spelled
   differently than any existing `printed_names` entry — add the new

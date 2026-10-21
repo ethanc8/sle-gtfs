@@ -128,7 +128,7 @@ trip_short_name,direction_id,stop_sequence,stop_id,printed_name,arrival_text,dep
 1610,0,3,SLE-BNF,Branford,10:02 A,10:02 A,1
 1610,0,4,SLE-GUI,Guilford,10:10 A,10:10 A,1
 1610,0,5,SLE-CLN,Clinton,10:20 A,10:20 A,1
-1610,0,6,SLE-WSB,Westbrook,10:25 A,10:25 A,4
+1610,0,6,SLE-WSB,Westbrook,10:25 A,10:25 A,1
 1610,0,7,SLE-OSB,Old Saybrook,10:31 A,10:31 A,
 1610,0,8,SLE-NLC,New London,10:55 A,10:55 A,
 1632,0,1,SLE-2NH,New Haven - Union Station,2:15 P,2:15 P,

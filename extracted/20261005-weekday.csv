@@ -37,7 +37,7 @@ trip_short_name,direction_id,stop_sequence,stop_id,printed_name,arrival_text,dep
 1659,1,4,SLE-CLN,Clinton,10:29 A,10:29 A,2
 1659,1,5,SLE-MDS,Madison,10:34 A,10:34 A,
 1659,1,6,SLE-GUI,Guilford,10:39 A,10:39 A,1
-1659,1,7,SLE-BNF,Branford,10:47 A,10:47 A,4
+1659,1,7,SLE-BNF,Branford,10:47 A,10:47 A,1
 1659,1,8,SLE-2SS,New Haven - State Street,10:57 A,10:57 A,
 1659,1,9,SLE-2NH,New Haven - Union Station,11:04 A,11:04 A,
 1667,1,1,SLE-NLC,New London,11:12 A,11:12 A,
@@ -45,7 +45,7 @@ trip_short_name,direction_id,stop_sequence,stop_id,printed_name,arrival_text,dep
 1667,1,3,SLE-WSB,Westbrook,11:39 A,11:39 A,1
 1667,1,4,SLE-CLN,Clinton,11:44 A,11:44 A,1
 1667,1,5,SLE-GUI,Guilford,11:57 A,11:57 A,1
-1667,1,6,SLE-BNF,Branford,12:04 P,12:04 P,4
+1667,1,6,SLE-BNF,Branford,12:04 P,12:04 P,1
 1667,1,7,SLE-2SS,New Haven - State Street,12:14 P,12:14 P,
 1667,1,8,SLE-2NH,New Haven - Union Station,12:18 P,12:18 P,
 1681,1,1,SLE-NLC,New London,3:05 P,3:05 P,
@@ -53,7 +53,7 @@ trip_short_name,direction_id,stop_sequence,stop_id,printed_name,arrival_text,dep
 1681,1,3,SLE-WSB,Westbrook,3:32 P,3:32 P,1
 1681,1,4,SLE-CLN,Clinton,3:37 P,3:37 P,1
 1681,1,5,SLE-GUI,Guilford,3:47 P,3:47 P,1
-1681,1,6,SLE-BNF,Branford,3:56 P,3:56 P,4
+1681,1,6,SLE-BNF,Branford,3:56 P,3:56 P,1
 1681,1,7,SLE-2SS,New Haven - State Street,4:08 P,4:08 P,
 1681,1,8,SLE-2NH,New Haven - Union Station,4:14 P,4:14 P,
 1683,1,1,SLE-NLC,New London,4:40 P,4:40 P,
@@ -61,7 +61,7 @@ trip_short_name,direction_id,stop_sequence,stop_id,printed_name,arrival_text,dep
 1683,1,3,SLE-WSB,Westbrook,5:07 P,5:07 P,1
 1683,1,4,SLE-CLN,Clinton,5:12 P,5:12 P,1
 1683,1,5,SLE-GUI,Guilford,5:22 P,5:22 P,1
-1683,1,6,SLE-BNF,Branford,5:31 P,5:31 P,4
+1683,1,6,SLE-BNF,Branford,5:31 P,5:31 P,1
 1683,1,7,SLE-2SS,New Haven - State Street,5:43 P,5:43 P,
 1683,1,8,SLE-2NH,New Haven - Union Station,5:49 P,5:49 P,
 1687,1,1,SLE-NLC,New London,6:00 P,6:00 P,
@@ -69,7 +69,7 @@ trip_short_name,direction_id,stop_sequence,stop_id,printed_name,arrival_text,dep
 1687,1,3,SLE-WSB,Westbrook,6:26 P,6:26 P,1
 1687,1,4,SLE-CLN,Clinton,6:30 P,6:30 P,1
 1687,1,5,SLE-GUI,Guilford,6:39 P,6:39 P,1
-1687,1,6,SLE-BNF,Branford,6:47 P,6:47 P,4
+1687,1,6,SLE-BNF,Branford,6:47 P,6:47 P,1
 1687,1,7,SLE-2SS,New Haven - State Street,6:59 P,6:59 P,
 1687,1,8,SLE-2NH,New Haven - Union Station,7:05 P,7:05 P,
 1691,1,1,SLE-NLC,New London,6:50 P,6:50 P,
@@ -77,7 +77,7 @@ trip_short_name,direction_id,stop_sequence,stop_id,printed_name,arrival_text,dep
 1691,1,3,SLE-WSB,Westbrook,7:17 P,7:17 P,1
 1691,1,4,SLE-CLN,Clinton,7:22 P,7:22 P,1
 1691,1,5,SLE-GUI,Guilford,7:32 P,7:32 P,1
-1691,1,6,SLE-BNF,Branford,7:41 P,7:41 P,4
+1691,1,6,SLE-BNF,Branford,7:41 P,7:41 P,1
 1691,1,7,SLE-2SS,New Haven - State Street,7:53 P,7:53 P,
 1691,1,8,SLE-2NH,New Haven - Union Station,7:59 P,7:59 P,
 1693,1,1,SLE-NLC,New London,7:28 P,7:28 P,
@@ -85,7 +85,7 @@ trip_short_name,direction_id,stop_sequence,stop_id,printed_name,arrival_text,dep
 1693,1,3,SLE-WSB,Westbrook,7:55 P,7:55 P,1
 1693,1,4,SLE-CLN,Clinton,8:00 P,8:00 P,1
 1693,1,5,SLE-GUI,Guilford,8:10 P,8:10 P,1
-1693,1,6,SLE-BNF,Branford,8:19 P,8:19 P,4
+1693,1,6,SLE-BNF,Branford,8:19 P,8:19 P,1
 1693,1,7,SLE-2SS,New Haven - State Street,8:31 P,8:31 P,
 1693,1,8,SLE-2NH,New Haven - Union Station,8:37 P,8:37 P,
 1695,1,1,SLE-NLC,New London,9:05 P,9:05 P,
@@ -93,7 +93,7 @@ trip_short_name,direction_id,stop_sequence,stop_id,printed_name,arrival_text,dep
 1695,1,3,SLE-WSB,Westbrook,9:30 P,9:30 P,1
 1695,1,4,SLE-CLN,Clinton,9:35 P,9:35 P,1
 1695,1,5,SLE-GUI,Guilford,9:46 P,9:46 P,1
-1695,1,6,SLE-BNF,Branford,9:55 P,9:55 P,4
+1695,1,6,SLE-BNF,Branford,9:55 P,9:55 P,1
 1695,1,7,SLE-2SS,New Haven - State Street,10:07 P,10:07 P,
 1695,1,8,SLE-2NH,New Haven - Union Station,10:11 P,10:11 P,
 1699,1,1,SLE-NLC,New London,10:15 P,10:15 P,
@@ -101,7 +101,7 @@ trip_short_name,direction_id,stop_sequence,stop_id,printed_name,arrival_text,dep
 1699,1,3,SLE-WSB,Westbrook,10:41 P,10:41 P,1
 1699,1,4,SLE-CLN,Clinton,10:46 P,10:46 P,1
 1699,1,5,SLE-GUI,Guilford,10:54 P,10:54 P,1
-1699,1,6,SLE-BNF,Branford,11:01 P,11:01 P,4
+1699,1,6,SLE-BNF,Branford,11:01 P,11:01 P,1
 1699,1,7,SLE-2SS,New Haven - State Street,11:13 P,11:13 P,
 1699,1,8,SLE-2NH,New Haven - Union Station,11:18 P,11:18 P,
 1600,0,1,SLE-2NH,New Haven - Union Station,4:25 A,4:25 A,
@@ -125,15 +125,15 @@ trip_short_name,direction_id,stop_sequence,stop_id,printed_name,arrival_text,dep
 1604,0,1,SLE-2NH,New Haven - Union Station,6:05 A,6:05 A,
 1604,0,2,SLE-2SS,New Haven - State Street,6:07 A,6:07 A,
 1604,0,3,SLE-BNF,Branford,6:17 A,6:17 A,1
-1604,0,4,SLE-GUI,Guilford,6:25 A,6:25 A,4
-1604,0,5,SLE-CLN,Clinton,6:35 A,6:35 A,4
-1604,0,6,SLE-WSB,Westbrook,6:40 A,6:40 A,4
+1604,0,4,SLE-GUI,Guilford,6:25 A,6:25 A,1
+1604,0,5,SLE-CLN,Clinton,6:35 A,6:35 A,1
+1604,0,6,SLE-WSB,Westbrook,6:40 A,6:40 A,1
 1604,0,7,SLE-OSB,Old Saybrook,6:47 A,6:47 A,
 1604,0,8,SLE-NLC,New London,7:08 A,7:08 A,
 1606,0,1,SLE-2NH,New Haven - Union Station,8:05 A,8:05 A,
 1606,0,2,SLE-2SS,New Haven - State Street,8:07 A,8:07 A,
-1606,0,3,SLE-BNF,Branford,8:16 A,8:16 A,4
-1606,0,4,SLE-GUI,Guilford,8:24 A,8:24 A,4
+1606,0,3,SLE-BNF,Branford,8:16 A,8:16 A,1
+1606,0,4,SLE-GUI,Guilford,8:24 A,8:24 A,1
 1606,0,5,SLE-MDS,Madison,8:30 A,8:30 A,
 1606,0,6,SLE-CLN,Clinton,8:34 A,8:34 A,2
 1606,0,7,SLE-WSB,Westbrook,8:39 A,8:39 A,2

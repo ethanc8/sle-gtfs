@@ -111,20 +111,26 @@ def test_build_end_to_end_is_internally_consistent():
                 assert (cal["service_id"], date) in removed
 
 
-def test_noop_exception_revision_produces_nothing():
-    """The real 20261010-11-outage revision is flagged no_op=true in
-    config.toml (its SLE schedule is unchanged -- see its `notes`), so it
-    must not appear anywhere in the built feed: no calendar_dates rows, no
-    trips, no stop_times."""
+@pytest.mark.parametrize(
+    "revision_name,dates",
+    [
+        ("20261010-11-outage", ("20261010", "20261011")),
+        ("20261012-outage", ("20261012",)),
+    ],
+)
+def test_noop_exception_revision_produces_nothing(revision_name, dates):
+    """Both real no_op=true revisions in config.toml (their SLE schedules
+    are unchanged -- see each one's `notes`) must not appear anywhere in the
+    built feed: no calendar_dates rows, no trips, no stop_times."""
     config = B.load_config()
-    rev = next(r for r in config["revision"] if r["name"] == "20261010-11-outage")
+    rev = next(r for r in config["revision"] if r["name"] == revision_name)
     assert rev.get("no_op") is True  # guard against the config drifting silently
 
     tables = B.build(config)
     service_id = f"SLE-{rev['name']}"
     assert not any(t["service_id"] == service_id for t in tables["trips"])
     assert not any(c["service_id"] == service_id for c in tables["calendar_dates"])
-    assert not any(c["date"] in ("20261010", "20261011") for c in tables["calendar_dates"])
+    assert not any(c["date"] in dates for c in tables["calendar_dates"])
 
 
 def test_non_noop_exception_revision_builds_independent_service_and_suppresses_standing():

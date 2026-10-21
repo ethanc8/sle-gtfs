@@ -194,16 +194,38 @@ def classify_columns(grid: pdf_grid.Grid) -> dict[int, tuple[str, str]]:
     return kept
 
 
-# Padding and page-segmentation mode to try, in order -- tesseract on these
-# small crops is occasionally flaky (the same crop can OCR to empty text on
-# one call and succeed on a retry), so try a few reasonable variations
-# before giving up rather than failing on the first miss.
-OCR_ATTEMPTS = [(pad, psm) for pad in (3, 2, 5, 4, 6) for psm in (7, 6)]
+# Render resolution, crop padding, and page-segmentation mode to try --
+# tesseract on these small crops is flaky enough that the same badge can
+# confidently OCR to the WRONG digit, not just fail outright. A real
+# instance found during this project: at 400dpi (this module's original
+# default), "TRACK 1" badges on one PDF consistently misread as "TRACK 4"
+# across every psm mode tried, even with a digit-only whitelist -- the
+# glyph was simply rendered too small/blurry at that resolution to
+# distinguish. The same crop at 600dpi read correctly every time. Since a
+# confidently-wrong OCR result is exactly the failure a human reviewing
+# extracted/*.draft.csv against the rendered PDF is supposed to catch (see
+# UPDATING.md section 3), and that review can't be skipped anyway, this
+# tries several resolutions (not just pad/psm) and takes the majority vote
+# across *all* combinations rather than returning on the first hit --
+# cheap insurance, not a replacement for the manual check.
+# Each pytesseract call shells out to the tesseract binary, which is slow
+# enough (~0.5-1s/call) that a large cross-product here makes extraction
+# impractically slow -- but varying only resolution isn't enough either:
+# which page-segmentation mode reads a given badge correctly turns out to
+# be badge-specific, not something that generalizes (psm 7 cleanly resolved
+# one badge that misread at 400dpi, but came back empty on a *different*
+# badge that every other psm mode read fine). So both resolution and psm
+# are varied, pad is not (it didn't appear to matter on its own).
+OCR_ATTEMPTS = [
+    (resolution, 3, psm) for resolution in (600, 800) for psm in (7, 8, 13)
+]
 
 
-def ocr_track_badge(page, img: dict, resolution=400) -> int:
+def ocr_track_badge(page, img: dict) -> int:
+    votes: dict[int, int] = {}
+    order: list[int] = []  # first-seen order, for deterministic tie-breaking
     attempts_text = []
-    for pad, psm in OCR_ATTEMPTS:
+    for resolution, pad, psm in OCR_ATTEMPTS:
         bbox = (
             max(0, img["x0"] - pad),
             max(0, img["top"] - pad),
@@ -211,21 +233,29 @@ def ocr_track_badge(page, img: dict, resolution=400) -> int:
             min(page.height, img["bottom"] + pad),
         )
         crop = page.crop(bbox)
-        pil: Image.Image = crop.to_image(resolution=resolution).original
+        pil: Image.Image = crop.to_image(resolution=resolution).original.convert("L")
         pil = pil.resize((pil.width * 4, pil.height * 4))
-        text = pytesseract.image_to_string(pil, config=f"--psm {psm}")
+        text = pytesseract.image_to_string(
+            pil, config=f"--psm {psm} -c tessedit_char_whitelist=0123456789"
+        )
         attempts_text.append(text)
         m = TRACK_DIGIT_RE.search(text)
         if not m:
             continue
         value = int(m.group())
-        if 1 <= value <= 9:
-            return value
-    raise ValueError(
-        f"could not OCR a plausible track number from badge at "
-        f"({img['x0']:.1f},{img['top']:.1f},{img['x1']:.1f},{img['bottom']:.1f}) "
-        f"after {len(OCR_ATTEMPTS)} attempts: {attempts_text!r}"
-    )
+        if not 1 <= value <= 9:
+            continue
+        if value not in votes:
+            order.append(value)
+        votes[value] = votes.get(value, 0) + 1
+
+    if not votes:
+        raise ValueError(
+            f"could not OCR a plausible track number from badge at "
+            f"({img['x0']:.1f},{img['top']:.1f},{img['x1']:.1f},{img['bottom']:.1f}) "
+            f"after {len(OCR_ATTEMPTS)} attempts: {attempts_text!r}"
+        )
+    return max(order, key=lambda v: votes[v])
 
 
 def row_track_badges(page, grid: pdf_grid.Grid, row: int) -> list[tuple[int, int]]:

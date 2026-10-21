@@ -549,3 +549,107 @@ build:
   lookup is baked in at extraction time, not resolved later) — see
   `gtfs_builder/config.toml`'s stops section for the full station-by-station
   code table.
+
+## 14. Correction: MNR's feed *does* contain the thru-trains
+
+Section 0/12's claim that "Metro-North's own GTFS doesn't contain the SLE
+thru-trains at all" was **wrong**, and worth recording exactly how, since the
+mistake itself is instructive. The original check was `grep -i "SLE\|Shore"
+gtfsmnr/trips.txt gtfs_mnr/routes.txt` — zero matches, taken as proof. That
+was never going to find anything: MNR's own feed has no reason to label a
+train it operates "SLE" internally; it would just appear as an ordinary
+numbered trip on MNR's own route. Searching for the actual train numbers
+instead finds it immediately:
+
+```
+3,246131924613651,246131924613651+2358187+1,Stamford,1633,1,,5,0,1
+3,246131924613651,246131924613651+2358191+0,New Haven-State St,1638,0,,16,0,0
+```
+
+— and that trip's `stop_times.txt` matches our own PDF-extracted times for
+1633's New Haven→Stamford leg to the minute, including the 6:55 departure
+from New Haven.
+
+**Why this doesn't change the shipped design anyway**, once investigated
+further: MNR's trip_id for "1633"/"1638" is not one stable identifier — MNR
+publishes a *different* trip_id per calendar date (part of a day-of-week
+equipment/crew diagram rotation; 41 distinct trip_ids were found just for
+`trip_short_name=1638` in the one snapshot in `sources/gtfsmnr/`, e.g. one
+service_id covers only Mondays Oct 5–Nov 16, a different one only Tuesdays,
+etc.) — and that snapshot's own calendar_dates only goes back to about
+2026-10-01, so it couldn't help with the Mar 29 revision regardless. Reusing
+MNR's literal trip_id would mean either re-fetching a live, current MNR
+export on every build (contradicting the owner's "the converter probably
+shouldn't read the Amtrak or MNR GTFS feeds" instruction) or modeling SLE's
+own trips at MNR's day-by-day granularity, which the public SLE timetable
+doesn't even distinguish. The owner confirmed after seeing this: don't
+pursue MNR trip_id/stop_id merging after all — the self-contained `SLE-*`
+trip_id scheme and the (separately motivated, section 13) MNR-`stop_code`
+reuse stand as shipped. Stop_id-level reuse remains real and stable (the
+station is the same place regardless of which specific date's trip_id names
+it); trip_id-level reuse was the part that turned out impractical, for
+reasons beyond "MNR doesn't have it" — MNR does, it's just not stable.
+
+## 15. Track-badge OCR correctness bug, found via the 2026-10-12 outage PDF
+
+CTrail published a third outage-notice PDF,
+`SLE-10_12-Portal-North-Bridge-MNR-WALK-Bridge-Outage.pdf` (effective
+2026-10-12, Columbus Day — a weekday, unlike the 10/10-11 weekend one).
+Extracting it to compare against the standing `20261005-weekday` revision
+surfaced 20 apparent track-assignment differences at Branford/Guilford
+(flipping between tracks 1 and 4). All 20 turned out to be OCR misreads in
+the *new* PDF's extraction, not real differences — confirmed by cropping and
+reading the actual rendered badges by eye, every one of which matched the
+standing schedule exactly. Comparing against this same-era PDF is what
+surfaced it, not anything specific to this PDF being wrong.
+
+**Investigating further found this was not a one-off**: the same "1
+misread as 4 (or 7)" failure was already present, silently, in the
+*previously shipped* `20260329-weekday.csv` and `20261005-weekend.csv` —
+both had been promoted during earlier implementation sessions without this
+being caught, despite the project's own "verify every cell against the
+rendered PDF" policy. A systematic re-check (cropping and reading every
+track badge in all three weekday and all three weekend PDFs by eye, then
+cross-validating that every PDF pair agreed on every shared trip/station)
+found and fixed all of it — see the station-by-station tables carried in
+this session's transcript if re-deriving this is ever needed again; the
+corrected values are now what's checked into `extracted/*.csv`.
+
+**Root cause**: `ocr_track_badge`'s original default render resolution
+(400dpi) was too low to reliably distinguish "1" from "4" for this specific
+badge glyph/arrow-icon combination on at least two of the PDFs — confirmed
+by re-cropping the identical bounding box at 600dpi, which read correctly
+every time. A digit-only tesseract whitelist was also added (free-form OCR
+had been reading the arrow glyph after the digit as extra spurious digits).
+**Neither fix alone was sufficient and OCR here is not fully deterministic**:
+even with the whitelist and resolution fix, a single tesseract invocation
+occasionally still returns the wrong digit (or empty text) on some
+badge/PDF combinations, and running the *exact same code against the exact
+same PDF* has been observed to produce different results across separate
+invocations — real nondeterminism, not environment-specific flakiness. The
+shipped mitigation is a majority vote across several resolution/psm
+combinations (`OCR_ATTEMPTS` in `pdf_extract.py`), which is a real
+improvement but explicitly **not** treated as sufficient on its own — see
+below.
+
+**Consequence for how this pipeline is tested and trusted**: given OCR
+non-determinism is real, any test or process that needs a *fact* about a
+schedule (e.g. "this outage PDF is identical to the standing one") now reads
+the already-promoted `extracted/*.csv` files rather than re-running
+extraction live — see `test_pdf_extract.py`'s module docstring and
+`test_noop_outage_matches_standing_schedule_exactly`. Live re-extraction in
+tests is now limited to checks that don't depend on any individual OCR'd
+digit being right (trip/stop *counts*, which only change if row/column
+detection structurally breaks) and to `sources/older_examples/`, which has
+no promoted-CSV equivalent to compare against. This is also a reminder for
+future revisions: **promotion must mean actually looking at the rendered
+PDF**, not trusting that extraction "usually works" — exactly the failure
+mode the sibling MARC project's own lessons document warned about, which
+this project itself fell into once before being corrected.
+
+`20261012-outage` itself, once its track data was hand-corrected to match
+manual verification, turned out byte-identical to the standing
+`20261005-weekday` revision (same trips, times, and tracks — only the MNR
+connection columns differ, and this PDF drops the AMTK connecting-train
+columns entirely rather than showing them blank). It's configured
+`no_op = true`, same as `20261010-11-outage`.

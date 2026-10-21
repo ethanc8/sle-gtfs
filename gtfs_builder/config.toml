@@ -274,3 +274,31 @@ itself (`suppressed_services_for`, the no_op-override integration test in
 test_build_gtfs.py) stays in the pipeline, it's just not exercised by this
 particular revision's default config anymore.
 """
+
+[[revision]]
+name = "20261012-outage"
+pdf = "SLE-10_12-Portal-North-Bridge-MNR-WALK-Bridge-Outage.pdf"
+type = "exception"
+day_type = "weekday"
+dates = ["2026-10-12"]
+no_op = true
+notes = """
+Portal North Bridge / MNR Walk Bridge outage notice for Columbus Day,
+Monday 2026-10-12. Extraction confirms SLE's own trip numbers, times, AND
+track assignments are byte-identical to the standing 20261005-weekday
+revision -- only the MNR connection columns (out of scope, requirement #8)
+differ, so no_op=true: nothing is added to or suppressed in the built feed
+for this revision. See test_pdf_extract.py's regression test comparing this
+PDF's extraction against the standing weekday revision.
+
+This PDF's own OCR draft initially showed 20 real-looking track
+discrepancies against the standing revision (Branford/Guilford flipping
+between tracks 1 and 4) -- all 20 turned out to be OCR misreads specific to
+this PDF file, not real differences, confirmed by directly reading the
+rendered badges by eye (every one matched the standing schedule). Finding
+this prompted a pass over every other extracted/*.csv too, which turned up
+the same "1 misread as 4 (or 7)" failure already present in the
+previously-shipped 20260329-weekday.csv and 20261005-weekend.csv -- see
+llm_notes/SPEC.md section 15 for the full story and the OCR pipeline
+changes made in response (digit whitelist, multi-resolution majority vote).
+"""
