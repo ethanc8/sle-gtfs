@@ -65,14 +65,41 @@ def slot_index(boundaries: list[float], value: float) -> int:
 def cell_text(page, x0: float, x1: float, y0: float, y1: float, x_tolerance=1) -> str:
     """All word text inside the half-open box [x0,x1) x [y0,y1), left to
     right, top to bottom (so a 2-3-line header cell comes out in reading
-    order, e.g. "SLE THRU 1633")."""
+    order, e.g. "SLE THRU 1633").
+
+    Words are first clustered into visual lines by `top`, using a tolerance
+    *relative to this cell's own height* (`y1 - y0`) rather than a fixed
+    point value, then each line is sorted left to right by `x0`. The
+    relative tolerance matters because this function runs across PDFs at
+    very different absolute scales: on one source PDF a superscript ordinal
+    suffix ("th" in "125th") renders a few points higher than its own line
+    and would otherwise sort *before* the word it modifies (the bug this
+    guards against), while a differently-scaled PDF's genuinely separate
+    header sub-lines (the stacked "SLE"/"SLE THRU" service-type line above
+    the train-number line) can be a similar few points apart in absolute
+    terms but must NOT be merged. A fixed absolute tolerance can't satisfy
+    both; one scaled to the cell's own height can.
+    """
     words = [
         w
         for w in page.extract_words(x_tolerance=x_tolerance)
         if x0 <= w["x0"] < x1 and y0 <= w["top"] < y1
     ]
-    words.sort(key=lambda w: (w["top"], w["x0"]))
-    return " ".join(w["text"] for w in words)
+    if not words:
+        return ""
+    words.sort(key=lambda w: w["top"])
+    tol = max(1.5, 0.08 * (y1 - y0))
+    lines: list[list] = []
+    for w in words:
+        if lines and w["top"] - lines[-1][-1]["top"] <= tol:
+            lines[-1].append(w)
+        else:
+            lines.append([w])
+    ordered = []
+    for line in lines:
+        line.sort(key=lambda w: w["x0"])
+        ordered.extend(line)
+    return " ".join(w["text"] for w in ordered)
 
 
 @dataclass

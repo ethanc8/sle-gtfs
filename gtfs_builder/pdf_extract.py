@@ -86,7 +86,12 @@ def load_config() -> dict:
 
 def normalize_station_name(name: str) -> str:
     name = name.lower().replace("-", " ").replace(".", "")
-    return re.sub(r"\s+", " ", name).strip()
+    name = re.sub(r"\s+", " ", name).strip()
+    # A superscript ordinal suffix ("th" in "125th") can land with a space
+    # before it after text extraction (see pdf_grid.cell_text's docstring)
+    # even once correctly reordered -- fold it back onto its number so
+    # "125 th" and "125th" normalize identically.
+    return re.sub(r"(\d+)\s+(st|nd|rd|th)\b", r"\1\2", name)
 
 
 def stop_lookup(config: dict) -> dict[str, str]:
@@ -271,6 +276,52 @@ def row_track_badges(page, grid: pdf_grid.Grid, row: int) -> list[tuple[int, int
     return badges
 
 
+# Some source PDFs (e.g. SLE-1116-Yearlong-View-to-Crescent-Track-Outage_v2.pdf)
+# render "TRACK n" as real text instead of a raster badge image -- same
+# placement (mixed into the row-label cell, and as its own cell in an
+# otherwise-blank spacer column), just no OCR needed. See
+# `row_text_track_badges`/`strip_track_from_label` and SPEC.md section 16.
+TRACK_TEXT_RE = re.compile(r"TRACK\s*(\d+)")
+
+
+def strip_track_from_label(text: str) -> tuple[str, int | None]:
+    """"TRACK 2 Westbrook" / "Clinton TRACK 2" -> ("Westbrook"/"Clinton", 2);
+    "Madison" -> ("Madison", None). Word order varies by PDF (the badge's x
+    position relative to the station name isn't consistent row to row), so
+    this matches the "TRACK n" substring wherever it falls and removes just
+    that, rather than assuming a fixed prefix/suffix position."""
+    m = TRACK_TEXT_RE.search(text)
+    if not m:
+        return text, None
+    cleaned = (text[: m.start()] + text[m.end() :]).strip()
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    return cleaned, int(m.group(1))
+
+
+def row_text_track_badges(
+    grid: pdf_grid.Grid, row: int, real_columns: set[int], label_track: int | None
+) -> list[tuple[int, int]]:
+    """Text-badge equivalent of `row_track_badges`: [(column_index,
+    track_number), ...] for this row, from column 0's already-extracted
+    `label_track` (if any) plus any other non-trip column whose cell is
+    *exactly* "TRACK n" (as opposed to a time value, which real trip
+    columns always contain instead)."""
+    badges = []
+    if label_track is not None:
+        badges.append((0, label_track))
+    for c in range(1, grid.num_columns):
+        if c in real_columns:
+            continue
+        cell = grid.cell(row, c).strip()
+        if not cell:
+            continue
+        m = re.fullmatch(r"TRACK\s*(\d+)", cell)
+        if m:
+            badges.append((c, int(m.group(1))))
+    badges.sort()
+    return badges
+
+
 def track_for_columns(badges: list[tuple[int, int]], columns: list[int]) -> dict[int, int | None]:
     """Propagate each badge's value forward (left to right) to every real
     column at or after it, until the next badge supersedes it -- see
@@ -298,9 +349,10 @@ def extract_table(page, y0: float, y1: float, stops: dict[str, str], excluded: s
         result[train_number] = {"service_type": service_type, "stops": []}
 
     for r in range(1, grid.num_rows):
-        label = grid.cell(r, 0)
-        if not label:
+        raw_label = grid.cell(r, 0)
+        if not raw_label:
             continue
+        label, label_track = strip_track_from_label(raw_label)
         key = normalize_station_name(label)
         stop_id = stops.get(key)
         if stop_id is None:
@@ -310,7 +362,10 @@ def extract_table(page, y0: float, y1: float, stops: dict[str, str], excluded: s
                 f"unmapped station label {label!r} (normalized {key!r}) -- "
                 f"add it to config.toml [[stops]] or excluded_connection_stations"
             )
-        badges = row_track_badges(page, grid, r)
+        badges = row_track_badges(page, grid, r) + row_text_track_badges(
+            grid, r, set(columns), label_track
+        )
+        badges.sort()
         tracks = track_for_columns(badges, list(columns))
         for c, (service_type, train_number) in columns.items():
             cell = grid.cell(r, c)

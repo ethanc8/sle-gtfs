@@ -1,0 +1,136 @@
+trip_short_name,direction_id,stop_sequence,stop_id,printed_name,arrival_text,departure_text,track
+3613,1,1,SLE-NLC,New London,6:25 A,6:25 A,
+3613,1,2,SLE-OSB,Old Saybrook,6:46 A,6:46 A,
+3613,1,3,SLE-WSB,Westbrook,6:51 A,6:51 A,2
+3613,1,4,SLE-CLN,Clinton,6:56 A,6:56 A,2
+3613,1,5,SLE-MDS,Madison,7:01 A,7:01 A,
+3613,1,6,SLE-GUI,Guilford,7:06 A,7:06 A,4
+3613,1,7,SLE-BNF,Branford,7:14 A,7:14 A,2
+3613,1,8,SLE-2SS,New Haven - State Street,7:28 A,7:28 A,
+3613,1,9,SLE-2NH,New Haven - Union Station,7:30 A,7:30 A,
+3621,1,1,SLE-NLC,New London,8:18 A,8:18 A,
+3621,1,2,SLE-OSB,Old Saybrook,8:39 A,8:39 A,
+3621,1,3,SLE-WSB,Westbrook,8:44 A,8:44 A,2
+3621,1,4,SLE-CLN,Clinton,8:49 A,8:49 A,2
+3621,1,5,SLE-MDS,Madison,8:54 A,8:54 A,
+3621,1,6,SLE-GUI,Guilford,8:59 A,8:59 A,4
+3621,1,7,SLE-BNF,Branford,9:07 A,9:07 A,2
+3621,1,8,SLE-2SS,New Haven - State Street,9:19 A,9:19 A,
+3621,1,9,SLE-2NH,New Haven - Union Station,9:23 A,9:23 A,
+3629,1,1,SLE-NLC,New London,10:42 A,10:42 A,
+3629,1,2,SLE-OSB,Old Saybrook,11:05 A,11:05 A,
+3629,1,3,SLE-WSB,Westbrook,11:12 A,11:12 A,2
+3629,1,4,SLE-CLN,Clinton,11:17 A,11:17 A,2
+3629,1,5,SLE-MDS,Madison,11:22 A,11:22 A,
+3629,1,6,SLE-GUI,Guilford,11:28 A,11:28 A,4
+3629,1,7,SLE-BNF,Branford,11:37 A,11:37 A,2
+3629,1,8,SLE-2SS,New Haven - State Street,11:50 A,11:50 A,
+3629,1,9,SLE-2NH,New Haven - Union Station,11:55 A,11:55 A,
+3637,1,1,SLE-NLC,New London,12:45 P,12:45 P,
+3637,1,2,SLE-OSB,Old Saybrook,1:10 P,1:10 P,
+3637,1,3,SLE-WSB,Westbrook,1:18 P,1:18 P,2
+3637,1,4,SLE-CLN,Clinton,1:23 P,1:23 P,2
+3637,1,5,SLE-MDS,Madison,1:28 P,1:28 P,
+3637,1,6,SLE-GUI,Guilford,1:34 P,1:34 P,4
+3637,1,7,SLE-BNF,Branford,1:43 P,1:43 P,2
+3637,1,8,SLE-2SS,New Haven - State Street,1:56 P,1:56 P,
+3637,1,9,SLE-2NH,New Haven - Union Station,2:01 P,2:01 P,
+3645,1,1,SLE-NLC,New London,2:30 P,2:30 P,
+3645,1,2,SLE-OSB,Old Saybrook,2:52 P,2:52 P,
+3645,1,3,SLE-WSB,Westbrook,2:58 P,2:58 P,1
+3645,1,4,SLE-CLN,Clinton,3:03 P,3:03 P,1
+3645,1,5,SLE-GUI,Guilford,3:13 P,3:13 P,1
+3645,1,6,SLE-BNF,Branford,3:22 P,3:22 P,1
+3645,1,7,SLE-2SS,New Haven - State Street,3:35 P,3:35 P,
+3645,1,8,SLE-2NH,New Haven - Union Station,3:39 P,3:39 P,
+3655,1,1,SLE-NLC,New London,5:25 P,5:25 P,
+3655,1,2,SLE-OSB,Old Saybrook,5:49 P,5:49 P,
+3655,1,3,SLE-WSB,Westbrook,5:54 P,5:54 P,1
+3655,1,4,SLE-CLN,Clinton,5:59 P,5:59 P,1
+3655,1,5,SLE-GUI,Guilford,6:08 P,6:08 P,1
+3655,1,6,SLE-BNF,Branford,6:18 P,6:18 P,1
+3655,1,7,SLE-2SS,New Haven - State Street,6:31 P,6:31 P,
+3655,1,8,SLE-2NH,New Haven - Union Station,6:35 P,6:35 P,
+3663,1,1,SLE-NLC,New London,8:50 P,8:50 P,
+3663,1,2,SLE-OSB,Old Saybrook,9:13 P,9:13 P,
+3663,1,3,SLE-WSB,Westbrook,9:21 P,9:21 P,1
+3663,1,4,SLE-CLN,Clinton,9:26 P,9:26 P,1
+3663,1,5,SLE-GUI,Guilford,9:36 P,9:36 P,1
+3663,1,6,SLE-BNF,Branford,9:45 P,9:45 P,1
+3663,1,7,SLE-2SS,New Haven - State Street,9:58 P,9:58 P,
+3663,1,8,SLE-2NH,New Haven - Union Station,10:03 P,10:03 P,
+3699,1,1,SLE-NLC,New London,11:50 P,11:50 P,
+3699,1,2,SLE-OSB,Old Saybrook,12:10 A,12:10 A,
+3699,1,3,SLE-WSB,Westbrook,12:15 A,12:15 A,1
+3699,1,4,SLE-CLN,Clinton,12:21 A,12:21 A,1
+3699,1,5,SLE-GUI,Guilford,12:30 A,12:30 A,1
+3699,1,6,SLE-BNF,Branford,12:39 A,12:39 A,1
+3699,1,7,SLE-2NH,New Haven - Union Station,12:55 A,12:55 A,
+3690,0,1,SLE-2NH,New Haven - Union Station,5:10 A,5:10 A,
+3690,0,2,SLE-BNF,Branford,5:21 A,5:21 A,1
+3690,0,3,SLE-GUI,Guilford,5:29 A,5:29 A,1
+3690,0,4,SLE-MDS,Madison,5:33 A,5:33 A,
+3690,0,5,SLE-CLN,Clinton,5:38 A,5:38 A,2
+3690,0,6,SLE-WSB,Westbrook,5:43 A,5:43 A,2
+3690,0,7,SLE-OSB,Old Saybrook,5:49 A,5:49 A,
+3690,0,8,SLE-NLC,New London,6:10 A,6:10 A,
+3692,0,1,SLE-2NH,New Haven - Union Station,6:50 A,6:50 A,
+3692,0,2,SLE-2SS,New Haven - State Street,6:52 A,6:52 A,
+3692,0,3,SLE-BNF,Branford,7:02 A,7:02 A,1
+3692,0,4,SLE-GUI,Guilford,7:10 A,7:10 A,1
+3692,0,5,SLE-CLN,Clinton,7:18 A,7:18 A,1
+3692,0,6,SLE-WSB,Westbrook,7:23 A,7:23 A,1
+3692,0,7,SLE-OSB,Old Saybrook,7:32 A,7:32 A,
+3692,0,8,SLE-NLC,New London,8:00 A,8:00 A,
+3604,0,1,SLE-2NH,New Haven - Union Station,9:13 A,9:13 A,
+3604,0,2,SLE-2SS,New Haven - State Street,9:15 A,9:15 A,
+3604,0,3,SLE-BNF,Branford,9:28 A,9:28 A,1
+3604,0,4,SLE-GUI,Guilford,9:36 A,9:36 A,1
+3604,0,5,SLE-CLN,Clinton,9:47 A,9:47 A,1
+3604,0,6,SLE-WSB,Westbrook,9:52 A,9:52 A,1
+3604,0,7,SLE-OSB,Old Saybrook,10:05 A,10:05 A,
+3604,0,8,SLE-NLC,New London,10:27 A,10:27 A,
+3610,0,1,SLE-2NH,New Haven - Union Station,11:20 A,11:20 A,
+3610,0,2,SLE-2SS,New Haven - State Street,11:22 A,11:22 A,
+3610,0,3,SLE-BNF,Branford,11:34 A,11:34 A,1
+3610,0,4,SLE-GUI,Guilford,11:42 A,11:42 A,1
+3610,0,5,SLE-CLN,Clinton,11:52 A,11:52 A,1
+3610,0,6,SLE-WSB,Westbrook,11:57 A,11:57 A,1
+3610,0,7,SLE-OSB,Old Saybrook,12:06 P,12:06 P,
+3610,0,8,SLE-NLC,New London,12:30 P,12:30 P,
+3618,0,1,SLE-2NH,New Haven - Union Station,1:00 P,1:00 P,
+3618,0,2,SLE-2SS,New Haven - State Street,1:02 P,1:02 P,
+3618,0,3,SLE-BNF,Branford,1:11 P,1:11 P,1
+3618,0,4,SLE-GUI,Guilford,1:19 P,1:19 P,1
+3618,0,5,SLE-MDS,Madison,1:24 P,1:24 P,
+3618,0,6,SLE-CLN,Clinton,1:29 P,1:29 P,2
+3618,0,7,SLE-WSB,Westbrook,1:34 P,1:34 P,2
+3618,0,8,SLE-OSB,Old Saybrook,1:41 P,1:41 P,
+3618,0,9,SLE-NLC,New London,2:05 P,2:05 P,
+3034,0,1,SLE-2NH,New Haven - Union Station,3:55 P,3:55 P,
+3034,0,2,SLE-2SS,New Haven - State Street,3:57 P,3:57 P,
+3034,0,3,SLE-BNF,Branford,4:10 P,4:10 P,2
+3034,0,4,SLE-GUI,Guilford,4:18 P,4:18 P,4
+3034,0,5,SLE-MDS,Madison,4:24 P,4:24 P,
+3034,0,6,SLE-CLN,Clinton,4:29 P,4:29 P,2
+3034,0,7,SLE-WSB,Westbrook,4:34 P,4:34 P,2
+3034,0,8,SLE-OSB,Old Saybrook,4:43 P,4:43 P,
+3034,0,9,SLE-NLC,New London,5:05 P,5:05 P,
+3644,0,1,SLE-2NH,New Haven - Union Station,7:22 P,7:22 P,
+3644,0,2,SLE-2SS,New Haven - State Street,7:24 P,7:24 P,
+3644,0,3,SLE-BNF,Branford,7:37 P,7:37 P,2
+3644,0,4,SLE-GUI,Guilford,7:45 P,7:45 P,4
+3644,0,5,SLE-MDS,Madison,7:51 P,7:51 P,
+3644,0,6,SLE-CLN,Clinton,7:56 P,7:56 P,2
+3644,0,7,SLE-WSB,Westbrook,8:01 P,8:01 P,2
+3644,0,8,SLE-OSB,Old Saybrook,8:12 P,8:12 P,
+3644,0,9,SLE-NLC,New London,8:33 P,8:33 P,
+3652,0,1,SLE-2NH,New Haven - Union Station,10:27 P,10:27 P,
+3652,0,2,SLE-2SS,New Haven - State Street,10:29 P,10:29 P,
+3652,0,3,SLE-BNF,Branford,10:41 P,10:41 P,2
+3652,0,4,SLE-GUI,Guilford,10:49 P,10:49 P,4
+3652,0,5,SLE-MDS,Madison,10:55 P,10:55 P,
+3652,0,6,SLE-CLN,Clinton,11:00 P,11:00 P,2
+3652,0,7,SLE-WSB,Westbrook,11:05 P,11:05 P,2
+3652,0,8,SLE-OSB,Old Saybrook,11:13 P,11:13 P,
+3652,0,9,SLE-NLC,New London,11:35 P,11:35 P,

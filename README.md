@@ -1,14 +1,17 @@
 # CTrail Shore Line East GTFS
 
-An unofficial GTFS feed for CTrail Shore Line East, covering the two
-standing timetables effective 2026-03-29 and 2026-10-05 (through
-2026-11-01) plus the 2026-10-10/11 Walk Bridge outage exception, built from
-the PDFs in `sources/`.
+An unofficial GTFS feed for CTrail Shore Line East, covering the standing
+timetables effective 2026-03-29, 2026-10-05, and 2026-11-16 (provisionally
+through 2027-11-15 — see `UPDATING.md`) plus three outage-notice exceptions
+(2026-10-10/11, 2026-10-12, and the 2026-10-24/25/31–11/01 weekend set),
+built from the PDFs in `sources/`.
 
 See [`llm_notes/SPEC.md`](llm_notes/SPEC.md) for the full design and the
 reasoning behind every non-obvious decision. See
 [`UPDATING.md`](UPDATING.md) when CTrail publishes a new schedule PDF and
-this feed needs to be brought up to date.
+this feed needs to be brought up to date. See
+[`schedule_watcher/README.md`](schedule_watcher/README.md) for the tool that
+watches shorelineeast.com for a new PDF to react to in the first place.
 
 ## Building
 
@@ -31,7 +34,14 @@ Other targets:
   (`build/pdf-preview/`), for checking a cell in `extracted/*.csv` against
   the actual timetable by eye.
 - `make extract-draft` — re-run PDF extraction into `extracted/*.draft.csv`
-  (never overwrites the reviewed `extracted/*.csv` — see below).
+  (never overwrites the reviewed `extracted/*.csv` — see below). Pass
+  `REVISION=<name>` to extract just one `config.toml` revision instead of
+  all of them, e.g. `make extract-draft REVISION=20261116-weekday`.
+- `make check-new-schedules` — check shorelineeast.com/schedules/ for
+  schedule PDFs not already under `sources/` (network access required); see
+  `schedule_watcher/README.md`. A scheduled GitHub Actions workflow
+  (`.github/workflows/check-new-schedules.yml`) runs this and opens an
+  issue when it finds something.
 
 ## Repository layout
 
@@ -50,8 +60,11 @@ Other targets:
   manually verified cell-by-cell against the rendered pages before being
   trusted.
 - `gtfs_builder/` — the Python pipeline: PDF grid detection
-  (`pdf_grid.py`), timetable + track-badge OCR extraction (`pdf_extract.py`),
-  and the GTFS builder itself (`build_gtfs.py`).
+  (`pdf_grid.py`), timetable extraction including track numbers (either
+  OCR'd from a raster badge or read as plain text, depending on the source
+  PDF — `pdf_extract.py`), and the GTFS builder itself (`build_gtfs.py`).
+- `schedule_watcher/` — a small Rust crate/CLI that checks
+  shorelineeast.com/schedules/ for schedule PDFs not yet under `sources/`.
 - `validator/` — a small Rust crate (`gtfs-structures`) that round-trip-
   parses the built feed and checks referential integrity, stop-time
   ordering, and the exception/standing calendar-suppression invariant.
@@ -63,7 +76,9 @@ Other targets:
 - No `shapes.txt` — the consumer will run `pfaedle-rs` downstream to derive
   shapes from real track geometry.
 - No `transfers.txt`.
-- Calendar coverage ends 2026-11-01; no stance taken on Thanksgiving/
-  Christmas service for this feed (though the extraction pipeline is
-  regression-tested against last year's Thanksgiving/MLK PDFs — see
-  `sources/older_examples/`).
+- Calendar coverage currently ends 2027-11-15, but that date is a
+  placeholder (the 2026-11-16 schedule's own PDF states no end date) — see
+  `UPDATING.md` and `llm_notes/SPEC.md` section 16. No stance taken on
+  Thanksgiving/Christmas service for this feed (though the extraction
+  pipeline is regression-tested against last year's Thanksgiving/MLK PDFs —
+  see `sources/older_examples/`).

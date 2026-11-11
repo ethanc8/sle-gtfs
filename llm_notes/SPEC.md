@@ -653,3 +653,108 @@ manual verification, turned out byte-identical to the standing
 connection columns differ, and this PDF drops the AMTK connecting-train
 columns entirely rather than showing them blank). It's configured
 `no_op = true`, same as `20261010-11-outage`.
+
+## 16. A differently-templated PDF, two more real pipeline bugs, and a coverage gap
+
+CTrail published `SLE-1116-Yearlong-View-to-Crescent-Track-Outage_v2.pdf`
+(effective 2026-11-16) using what's visibly the same design but generated
+differently: the page is rendered at a much larger absolute scale (~4892×4132
+points vs. the ~792×612 of every earlier PDF — roughly 6× larger in each
+dimension, not a round multiple, so some different export pipeline, not just
+a DPI setting) with a different font, and — the one the project owner
+flagged up front — **track numbers are real PDF text now, not raster images**.
+
+### Track numbers as text, not images
+
+Mechanically this is the same propagation pattern already built for the
+image badges (section 6/2.3): a "TRACK n" value sits in the row-label cell
+mixed in with the station name (word order isn't fixed — "TRACK 2 Westbrook"
+on one row, "Clinton TRACK 2" on another, depending on the badge's x-position
+relative to the name), and again in otherwise-blank spacer columns further
+along the row, propagating forward exactly as before. `pdf_extract.py` gained
+`strip_track_from_label` (pulls the "TRACK n" substring out of a label cell
+wherever it falls, returning the cleaned name separately) and
+`row_text_track_badges` (the text-cell equivalent of `row_track_badges`,
+scanning non-trip columns for a cell that's *exactly* "TRACK n"). Both feed
+into the same `track_for_columns` propagation function the image-badge path
+already used — `extract_table` just merges badges from both sources (image
+and text) before propagating, so a row can only ever actually produce one
+kind in practice (a real PDF has one or the other, never both), with no
+branching needed on which kind of PDF this is.
+
+### A superscript-ordering bug in `cell_text`, and why a fixed tolerance can't fix it
+
+This PDF's much larger scale exposed a latent bug: `pdf_grid.cell_text`
+sorted words by `(top, x0)` to reconstruct multi-line header cells in reading
+order (needed for e.g. "SLE THRU 1633", stacked as two sub-lines). On this
+PDF, "Harlem - 125th St." renders "th" as a true superscript — raised a few
+points above its own baseline — which sorted it *before* "Harlem" entirely
+(smaller `top`), producing "th Harlem - 125 St." and breaking the
+Metro-North-only-station exclusion match.
+
+The fix (`cell_text` in `pdf_grid.py`) clusters words into visual lines by
+`top`-proximity before sorting each line by `x0`, same chase-merge idea used
+elsewhere in this codebase — but the merge tolerance is **relative to the
+cell's own height** (`0.08 * (y1 - y0)`, floored at 1.5pt), not a fixed point
+value. A fixed tolerance can't work across PDFs at different absolute scales:
+on this PDF the superscript offset (~3.4pt) and the real header sub-line gap
+(~34.5pt) are far enough apart that almost any fixed threshold would work for
+*this* file, but the original small-scale PDFs' own header sub-line gap is
+only ~5.6pt — comparable in magnitude to this PDF's superscript jitter, so no
+single fixed number satisfies both "merge the jitter" and "don't merge real
+sub-lines" across every PDF this pipeline might see. Scaling the tolerance to
+the cell's own height does, because both quantities scale together. A second
+fix in `normalize_station_name` folds a lingering "125 th" → "125th" (the
+word-order fix alone left a space the original station-name strings never
+had), so the normalized form matches the config's exclusion list either way.
+
+### Two "excluded the time columns by accident" mistakes, back to back
+
+Comparing this PDF's extraction against the standing `20261005-weekday`/
+`20261005-weekend` revisions to decide whether it was another no-op, a manual
+`diff` was run with `cut -d, -f1-5,8` — intended to ignore minor whitespace
+differences in the time text, but which actually **excluded the
+`arrival_text`/`departure_text` columns (6 and 7) entirely**, comparing only
+`trip_short_name,direction_id,stop_sequence,stop_id,printed_name,track`. That
+diff showed only two differences (trip 1693 and 1640 losing their New London
+stop, both confirmed real by reading the rendered PDF directly) and was
+initially taken as "the rest is unchanged." It wasn't — this is a
+near-total retiming of almost every trip, on *both* the weekday and weekend
+schedules, confirmed only once a proper regression test compared actual
+`(trip, stop) → (arrival, departure)` fingerprints rather than a hand-picked
+column subset. The same column-exclusion mistake was made independently
+twice (weekday, then weekend) before being caught — see
+`test_pdf_extract.py`'s `test_20261116_times_actually_differ_from_standing`
+and `test_20261116_weekday_drops_new_london_for_two_trips`, and
+`config.toml`'s comments on the `20261116-weekday`/`20261116-weekend`
+revisions for the full account. Lesson: a manual `cut`/`diff` spot-check is
+fine as a first pass, but the real "is this actually a no-op" determination
+needs the same full-fingerprint comparison the automated tests do — the
+project's own established pattern for the three earlier (and genuinely
+no-op) outage PDFs — not a hand-trimmed column list.
+
+### A real coverage gap, closed
+
+Before this PDF arrived, `20261005-weekday`/`20261005-weekend` had
+`end_date = "2026-11-01"` — a value chosen in an earlier session as "the
+last date we were confident about," not because anything was actually
+scheduled to change then. With no revision covering 2026-11-02 through
+2026-11-15, the feed had a real gap: zero standing service for two weeks,
+which would only have been noticed once someone tried to build a feed for
+`today` during that window. Extended both to `end_date = "2026-11-15"`
+(the day before this new PDF takes effect) on the reasoning that CTrail's
+previous schedule stays in effect until explicitly superseded, which this
+PDF's "Effective November 16, 2026" confirms it was. Worth checking for
+whenever a new standing revision arrives: does its `start_date` leave a gap
+after the previous revision's `end_date`?
+
+### Revision structure for this PDF
+
+Both `20261116-weekday` and `20261116-weekend` are `type = "standing"`,
+`start_date = "2026-11-16"`. Their `end_date` (`2027-11-15`, one year out) is
+explicitly a placeholder — the PDF states no end date, only effective date;
+the filename's "Yearlong" is the only hint of actual duration, and CTrail's
+observed publishing cadence this project has seen so far (a handful of
+revisions within about seven months) argues against taking "yearlong"
+literally without a firmer signal. Confirm or adjust once a superseding
+schedule appears.

@@ -30,8 +30,8 @@ feed_publisher_name = "CTrail Shore Line East"
 feed_publisher_url = "https://shorelineeast.com"
 feed_lang = "en"
 feed_start_date = "2026-03-29"
-feed_end_date = "2026-11-01"
-feed_version = "2026-10-05"
+feed_end_date = "2027-11-15"
+feed_version = "2026-11-16"
 
 # One entry per station that appears in any timetable PDF. `printed_names`
 # lists every exact spelling seen across the different tables (the "TO NEW
@@ -239,7 +239,12 @@ pdf = "SLE-October-5th-schedule_edit.pdf"
 type = "standing"
 day_type = "weekday"
 start_date = "2026-10-05"
-end_date = "2026-11-01"
+# Originally "2026-11-01" (the last date we were confident about at the
+# time). Extended to 2026-11-15 once SLE-1116-...-v2.pdf confirmed this
+# schedule stayed in effect right up until the 2026-11-16 change below --
+# closing what would otherwise have been an 11-02..11-15 gap with no
+# standing service in the feed at all.
+end_date = "2026-11-15"
 
 [[revision]]
 name = "20261005-weekend"
@@ -247,7 +252,7 @@ pdf = "SLE-October-5th-schedule_edit.pdf"
 type = "standing"
 day_type = "weekend"
 start_date = "2026-10-05"
-end_date = "2026-11-01"
+end_date = "2026-11-15"  # see 20261005-weekday's comment above
 
 [[revision]]
 name = "20261010-11-outage"
@@ -310,3 +315,52 @@ type = "exception"
 day_type = "weekend"
 dates = ["2026-10-24", "2026-10-25", "2026-10-31", "2026-11-01"]
 no_op = true
+
+# "Yearlong View to Crescent Track Outage" -- a longer-running track outage
+# near Old Saybrook/New London (the PDF adds a footnote directing riders
+# between those two stations to CTrides' emergency-ride-home program).
+# Unlike the three outage PDFs above, this one is NOT a no-op, on either
+# schedule -- in fact it's a near-total retiming, not a small tweak:
+#   - Weekday: almost every trip's times shifted by a few minutes (a full
+#     recalculation, not a uniform offset -- different stops on the same
+#     trip shift by different amounts). Two trips also genuinely stop short
+#     of New London, confirmed by reading the rendered PDF directly (not
+#     just diffing extraction output -- see llm_notes/SPEC.md section 16):
+#       - 1693 (TO NEW HAVEN) no longer serves New London; starts at Old
+#         Saybrook.
+#       - 1640 (TO NEW LONDON) no longer reaches New London; ends at Old
+#         Saybrook.
+#   - Weekend: likewise, most trips' times shifted by several minutes, with
+#     no stops dropped.
+#   This scale of change was NOT apparent from an early manual diff -- both
+#   the weekday and (independently) the weekend "looks unchanged except for
+#   two trips" conclusions came from diffs that accidentally excluded the
+#   time columns entirely (a `cut` column-index mistake, made twice). A
+#   fingerprint-based regression test (comparing full (stop, time) pairs,
+#   not a hand-picked column subset) is what actually caught this -- see
+#   SPEC.md section 16 and test_pdf_extract.py's
+#   test_20261116_weekday_times_actually_differ_from_standing_weekday /
+#   test_20261116_weekend_times_actually_differ_from_standing_weekend.
+#   This is why there's a real 20261116-weekend revision below rather than
+#   extending 20261005-weekend's end_date the way the three true no-op
+#   outage PDFs did -- the schedules are genuinely different, not identical.
+#
+# end_date (both revisions) is provisional: the PDF states no end date,
+# only "Effective November 16, 2026"; the filename's "Yearlong" is the only
+# hint of duration. Set to one year out as a placeholder -- confirm/adjust
+# once a superseding schedule is published or CTrail gives a firmer date.
+[[revision]]
+name = "20261116-weekday"
+pdf = "SLE-1116-Yearlong-View-to-Crescent-Track-Outage_v2.pdf"
+type = "standing"
+day_type = "weekday"
+start_date = "2026-11-16"
+end_date = "2027-11-15"
+
+[[revision]]
+name = "20261116-weekend"
+pdf = "SLE-1116-Yearlong-View-to-Crescent-Track-Outage_v2.pdf"
+type = "standing"
+day_type = "weekend"
+start_date = "2026-11-16"
+end_date = "2027-11-15"

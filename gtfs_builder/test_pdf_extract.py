@@ -25,6 +25,7 @@ which has no promoted-CSV equivalent to compare against.
 
 import csv
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -75,6 +76,27 @@ def test_normalize_station_name():
     assert X.normalize_station_name("New Haven Union Station") == "new haven union station"
     assert X.normalize_station_name("Harlem - 125th St.") == "harlem 125th st"
     assert X.normalize_station_name("  Old   Saybrook ") == "old saybrook"
+    # A superscript ordinal suffix can land with a space before it after
+    # text extraction even once correctly reordered (see pdf_grid.cell_text
+    # and SPEC.md section 16) -- "125 th" must normalize the same as "125th".
+    assert X.normalize_station_name("Harlem - 125 th St.") == X.normalize_station_name("Harlem - 125th St.")
+
+
+def test_strip_track_from_label():
+    assert X.strip_track_from_label("TRACK 2 Westbrook") == ("Westbrook", 2)
+    assert X.strip_track_from_label("Clinton TRACK 2") == ("Clinton", 2)
+    assert X.strip_track_from_label("Madison") == ("Madison", None)
+
+
+def test_row_text_track_badges():
+    grid = SimpleNamespace(
+        num_columns=5,
+        cell=lambda row, col: {1: "6:14 A", 2: "TRACK 2", 3: "11:54 A", 4: "9:58 A"}.get(col, ""),
+    )
+    # column 1 and 4 are real trip columns (times); column 2 is a blank
+    # spacer carrying a mid-row track change, same as the image-badge PDFs.
+    badges = X.row_text_track_badges(grid, 0, real_columns={1, 3, 4}, label_track=2)
+    assert badges == [(0, 2), (2, 2)]
 
 
 def test_classify_day_type():
@@ -115,6 +137,8 @@ def test_merge_pivot():
         ("20260329-weekend", "weekend", 16, 135),
         ("20261005-weekday", "weekday", 24, 216),
         ("20261005-weekend", "weekend", 16, 135),
+        ("20261116-weekday", "weekday", 24, 214),
+        ("20261116-weekend", "weekend", 16, 135),
     ],
 )
 def test_extract_shipped_revisions(config, revision_name, day_type, expected_trip_count, expected_stop_count):
@@ -123,6 +147,64 @@ def test_extract_shipped_revisions(config, revision_name, day_type, expected_tri
     trips = X.extract_revision(pdf_path, day_type, config)
     assert len(trips) == expected_trip_count
     assert sum(len(t["stops"]) for t in trips) == expected_stop_count
+
+
+def _trip_times(trips):
+    """{(trip_short_name, stop_id): (arrival_text, departure_text)} -- for
+    comparing two extractions' actual printed times, independent of stop
+    order within a trip."""
+    return {(t["trip_short_name"], s[0]): (s[2], s[3]) for t in trips for s in t["stops"]}
+
+
+def test_20261116_weekday_drops_new_london_for_two_trips(config):
+    """Two of SLE-1116-Yearlong-View-to-Crescent-Track-Outage_v2.pdf's real
+    schedule changes vs. the standing 20261005-weekday revision, confirmed
+    by reading the rendered PDF directly (not just diffing extraction
+    output) -- see llm_notes/SPEC.md section 16. This PDF's track numbers
+    are real text, not OCR'd images, so unlike the image-badge PDFs this
+    comparison is fully deterministic and safe to do via live extraction.
+    (These two stop-pattern changes are NOT the only difference from the
+    standing schedule -- see test_20261116_weekday_times_actually_differ_
+    from_standing_weekday below for the rest.)"""
+    rev = next(r for r in config["revision"] if r["name"] == "20261116-weekday")
+    trips = X.extract_revision(SOURCES_DIR / rev["pdf"], "weekday", config)
+
+    trip_1693 = next(t for t in trips if t["trip_short_name"] == "1693")
+    assert trip_1693["stops"][0][0] == "SLE-OSB"  # starts at Old Saybrook, not New London
+
+    trip_1640 = next(t for t in trips if t["trip_short_name"] == "1640")
+    assert trip_1640["stops"][-1][0] == "SLE-OSB"  # ends at Old Saybrook, not New London
+
+
+@pytest.mark.parametrize(
+    "standing_name,new_name,day_type",
+    [
+        ("20261005-weekday", "20261116-weekday", "weekday"),
+        ("20261005-weekend", "20261116-weekend", "weekend"),
+    ],
+)
+def test_20261116_times_actually_differ_from_standing(config, standing_name, new_name, day_type):
+    """SLE-1116-...-v2.pdf is a near-total retiming on BOTH schedules, not a
+    small tweak -- almost every trip's times shifted by a few minutes
+    (confirmed by reading the rendered PDF, not just this test). This is a
+    regression guard specifically against the mistake that happened twice
+    while building this revision: a manual `cut`-column diff that
+    accidentally excluded the time columns entirely, making both schedules
+    look unchanged except for the stop-pattern changes above -- see
+    llm_notes/SPEC.md section 16. A fingerprint over every (trip, stop)
+    pair's actual printed times is what catches that mistake; comparing a
+    hand-picked column subset (as the original manual diff did) would not."""
+    standing_rev = next(r for r in config["revision"] if r["name"] == standing_name)
+    new_rev = next(r for r in config["revision"] if r["name"] == new_name)
+    standing_trips = X.extract_revision(SOURCES_DIR / standing_rev["pdf"], day_type, config)
+    new_trips = X.extract_revision(SOURCES_DIR / new_rev["pdf"], day_type, config)
+
+    standing_times = _trip_times(standing_trips)
+    new_times = _trip_times(new_trips)
+    # same (trip, stop) pairs overall (the two New-London stop-pattern
+    # changes above are trip-specific, not a wholesale reshuffle), but the
+    # actual times must differ for this to be a real retiming.
+    assert standing_times != new_times
 
 
 def test_thru_trip_shares_new_haven_pivot_with_distinct_arrival_departure(config):

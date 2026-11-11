@@ -29,7 +29,19 @@ See `gtfs_builder/config.toml`'s own comments for the two revision shapes:
 - **`type = "standing"`**: an ordinary day-of-week calendar over a date
   range (what the 2026-03-29 and 2026-10-05 schedules are). Add one entry
   per day-type (`weekday`/`weekend`) the PDF covers, each with
-  `start_date`/`end_date`.
+  `start_date`/`end_date`. **Check the previous standing revision's
+  `end_date` against this one's `start_date`** — a gap between them is a
+  real gap in the built feed's service, not just a cosmetic config issue
+  (this happened once: `20261005-weekday`/`weekend` had a provisional
+  `end_date` chosen before anyone knew what came next, and nobody went
+  back to extend it once something did — see llm_notes/SPEC.md section
+  16). If the new PDF doesn't say explicitly, the reasonable default is
+  that the previous schedule stayed in effect right up until this one's
+  `start_date` — extend the previous revision's `end_date` to one day
+  before the new one's `start_date` unless you have reason to think
+  otherwise. `end_date` is very often a provisional guess in the first
+  place (the PDF rarely states one) — note that in the revision's
+  `notes`/a comment so the next person knows it's not firm.
 - **`type = "exception"`**: a calendar_dates.txt-only service active on
   specific `dates`. **Every exception revision is a fully independent
   calendar service** — its trips get their own trip_ids/stop_times, never
@@ -99,7 +111,22 @@ this because the extraction "usually works." Pay particular attention to:
   minimum cross-check against another revision that shares the same
   trip/station if one exists (see `test_pdf_extract.py`'s
   `test_noop_outage_matches_standing_schedule_exactly` for the kind of
-  cross-revision check this pattern enables).
+  cross-revision check this pattern enables). Not every PDF has this
+  problem, though — some render "TRACK n" as real text instead of a raster
+  image (`pdf_extract.row_text_track_badges`/`strip_track_from_label`
+  handle this automatically, no config needed), which is fully
+  deterministic and doesn't need this same scrutiny.
+- **Deciding whether a revision is a no-op (or exactly how it differs) by
+  manually diffing two `extracted/*.csv` files is an easy way to fool
+  yourself** — a `cut`/`diff` with a hand-picked column list silently
+  drops whatever you didn't list, and a diff that happens to exclude the
+  `arrival_text`/`departure_text` columns will report "looks unchanged"
+  for a PDF that's actually a near-total retiming (this happened twice
+  building the 2026-11-16 revision — see llm_notes/SPEC.md section 16).
+  Compare full `(trip, stop) → (arrival, departure, track)` fingerprints
+  (see `test_pdf_extract.py`'s `_trip_times`/`fingerprint_rows` helpers)
+  before concluding two revisions match, not a manually-trimmed column
+  subset.
 - If `pdf_extract.py` raises `KeyError: unmapped station label ...`: either
   a genuinely new station (see step 2) or a station name spelled
   differently than any existing `printed_names` entry — add the new
